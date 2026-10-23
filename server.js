@@ -20,7 +20,9 @@ const mode=resolveAppMode();
 const demo=mode==='demo';
 const appUrl=process.env.APP_URL||`http://127.0.0.1:${port}`;
 const dbPath=path.resolve(root,process.env.DATABASE_PATH||'data/mirari.sqlite');
-mkdirSync(path.dirname(dbPath),{recursive:true});mkdirSync(path.join(root,'assets/uploads'),{recursive:true});
+const uploadsPath=path.resolve(root,process.env.UPLOADS_PATH||'assets/uploads');
+if(uploadsPath===root||root.startsWith(uploadsPath+path.sep)||dbPath.startsWith(uploadsPath+path.sep))throw new Error('UPLOADS_PATH must be a dedicated directory that does not contain application files or the database.');
+mkdirSync(path.dirname(dbPath),{recursive:true});mkdirSync(uploadsPath,{recursive:true});
 if(process.env.STRIPE_SECRET_KEY&&!process.env.STRIPE_SECRET_KEY.startsWith('sk_test_')) throw new Error('Only Stripe sk_test_ keys are permitted. Live payments are disabled.');
 if(!demo&&(!process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_')||!process.env.STRIPE_WEBHOOK_SECRET))throw new Error('Stripe test mode requires STRIPE_SECRET_KEY=sk_test_... and STRIPE_WEBHOOK_SECRET.');
 if(production&&(!process.env.ADMIN_PASSWORD||!process.env.ADMIN_EMAIL||!process.env.ADMIN_TOTP_SECRET||!process.env.TRUSTED_PROXY_CIDRS||!appUrl.startsWith('https://')||!demo&&(!process.env.RESEND_API_KEY||!process.env.EMAIL_FROM))) throw new Error('Production requires admin credentials and MFA, a trusted proxy, HTTPS APP_URL, and email delivery in Stripe test mode.');
@@ -226,7 +228,7 @@ app.post('/api/admin/orders/:id/refund',async(req,res)=>{
 const upload=multer({storage:multer.memoryStorage(),limits:{fileSize:8*1024*1024,files:1}});
 app.post('/api/admin/upload',upload.single('image'),async(req,res)=>{
   if(!req.file)fail('Choose an image.');const name=`${token()}.webp`;
-  try{await sharp(req.file.buffer,{limitInputPixels:40_000_000}).rotate().resize({width:1800,withoutEnlargement:true}).webp({quality:82}).toFile(path.join(root,'assets/uploads',name));}catch{fail('Upload a valid JPEG, PNG or WebP image under 8 MB.');}res.json({url:`/assets/uploads/${name}`});
+  try{await sharp(req.file.buffer,{limitInputPixels:40_000_000}).rotate().resize({width:1800,withoutEnlargement:true}).webp({quality:82}).toFile(path.join(uploadsPath,name));}catch{fail('Upload a valid JPEG, PNG or WebP image under 8 MB.');}res.json({url:`/assets/uploads/${name}`});
 });
 function expandMail(body){return body.replace(/\{\{ORDER_LINK:([^}]+)\}\}/g,(_m,id)=>{const o=store.order(id);return o?`${appUrl}/order/${o.id}#key=${o.access_token}`:'Order unavailable';});}
 let sending=false;
@@ -278,6 +280,7 @@ async function reconcile(){
 setInterval(()=>{void sendMail().catch(()=>console.error('Email worker failed'));},15000).unref();
 setInterval(()=>{void reconcile().catch(()=>console.error('Payment reconciliation worker failed'));},60000).unref();
 setTimeout(()=>{void reconcile().catch(()=>console.error('Payment reconciliation worker failed'));},1000).unref();
+app.use('/assets/uploads',express.static(uploadsPath,{maxAge:'1d',dotfiles:'deny'}));
 app.use('/assets',express.static(path.join(root,'assets'),{maxAge:'1d',dotfiles:'deny'}));
 app.get('/styles.css',(_req,res)=>res.sendFile(path.join(root,'styles.css')));
 app.get('/vendor/jsQR.js',(_req,res)=>res.sendFile(path.join(root,'node_modules/jsqr/dist/jsQR.js')));

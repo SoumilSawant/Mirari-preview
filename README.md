@@ -53,6 +53,7 @@ The atlas uses local SVG geography, so it needs no map account or WebGL. Non-map
 | `APP_MODE` | `demo` or `stripe-test`; defaults to `demo` locally. There is no live mode |
 | `DEMO_MODE` | Deprecated compatibility setting; use `APP_MODE` instead. Conflicting values fail startup |
 | `DATABASE_PATH` | Default `data/mirari.sqlite`; use persistent storage |
+| `UPLOADS_PATH` | Default `assets/uploads`; set to a dedicated persistent uploads directory when deployed |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Explicit organiser account; password at least 12 characters |
 | `ADMIN_TOTP_SECRET` | Base32 authenticator secret; required in production |
 | `TRUSTED_PROXY_CIDRS` | Exact reverse proxy IP/CIDR list; required in production. Do not trust arbitrary forwarded headers |
@@ -89,7 +90,7 @@ To create a consistent snapshot while the app is running:
 npm run backup -- data/backups/mirari-YYYYMMDD.sqlite
 ```
 
-The backup command refuses to overwrite an existing file and checks SQLite integrity. Also back up `assets/uploads/` separately. Keep backups encrypted with restricted access and rehearse restoration regularly. To restore: stop the Node service, retain the damaged database and its `-wal`/`-shm` files for investigation, copy a verified snapshot to a **new** database path, copy the corresponding uploads, set `DATABASE_PATH` to the restored path and start the service. Check `/api/health`, `/api/admin/health`, a known order and an event before directing traffic to it. The automated restore test in `tests/migration.test.js` exercises a snapshot on a separate temporary database.
+The backup command refuses to overwrite an existing file and checks SQLite integrity. Also back up the `UPLOADS_PATH` directory (default `assets/uploads/`) separately. Keep backups encrypted with restricted access and rehearse restoration regularly. To restore: stop the Node service, retain the damaged database and its `-wal`/`-shm` files for investigation, copy a verified snapshot to a **new** database path, copy the corresponding uploads, set `DATABASE_PATH` and `UPLOADS_PATH` to the restored paths and start the service. Check `/api/health`, `/api/admin/health`, a known order and an event before directing traffic to it. The automated restore test in `tests/migration.test.js` exercises a snapshot on a separate temporary database.
 
 ## Organiser MFA and monitoring
 

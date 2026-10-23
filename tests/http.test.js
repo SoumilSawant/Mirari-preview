@@ -2,14 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {randomUUID,createHmac} from 'node:crypto';
-import {rmSync,existsSync} from 'node:fs';
+import {rmSync,existsSync,readFileSync} from 'node:fs';
 import path from 'node:path';
 import Stripe from 'stripe';
 test('HTTP flow: secure admin, reservation, signed payment, QR, retrieval, admission, refund and event editor',async()=>{
   const port=20000+Math.floor(Math.random()*15000),origin=`http://127.0.0.1:${port}`;
   const dbPath=path.resolve(`data/integration-${randomUUID()}.sqlite`);
+  const uploadsPath=path.resolve(`data/integration-uploads-${randomUUID()}`);
   const password=randomUUID(),secret='whsec_mirari_integration_test',totpSecret='GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ';
-  const server=spawn(process.execPath,['server.js'],{env:{...process.env,PORT:String(port),APP_URL:origin,HOST:'127.0.0.1',NODE_ENV:'test',DEMO_MODE:'true',DATABASE_PATH:dbPath,ADMIN_EMAIL:'qa@mirari.local',ADMIN_PASSWORD:password,ADMIN_TOTP_SECRET:totpSecret,STRIPE_SECRET_KEY:'sk_test_integration_only',STRIPE_WEBHOOK_SECRET:secret,RESEND_API_KEY:''},stdio:'pipe'});
+  const server=spawn(process.execPath,['server.js'],{env:{...process.env,PORT:String(port),APP_URL:origin,HOST:'127.0.0.1',NODE_ENV:'test',DEMO_MODE:'true',DATABASE_PATH:dbPath,UPLOADS_PATH:uploadsPath,ADMIN_EMAIL:'qa@mirari.local',ADMIN_PASSWORD:password,ADMIN_TOTP_SECRET:totpSecret,STRIPE_SECRET_KEY:'sk_test_integration_only',STRIPE_WEBHOOK_SECRET:secret,RESEND_API_KEY:''},stdio:'pipe'});
   let logs='';server.stdout.on('data',d=>logs+=d);server.stderr.on('data',d=>logs+=d);
   const exited=new Promise(resolve=>server.on('exit',resolve));
   async function req(url,{method='GET',body,headers={}}={}){
@@ -31,6 +32,11 @@ test('HTTP flow: secure admin, reservation, signed payment, QR, retrieval, admis
     const login=await req('/api/admin/login',{method:'POST',body:{email:'qa@mirari.local',password,code}});
     assert.equal(login.status,200);const cookie=login.headers.get('set-cookie').split(';')[0],admin={Cookie:cookie};
     assert.equal((await req('/api/admin/login',{method:'POST',body:{email:'qa@mirari.local',password,code}})).status,401);
+    const uploadBody=new FormData();uploadBody.append('image',new Blob([readFileSync(path.resolve('assets/mirari-logo.png'))],{type:'image/png'}),'logo.png');
+    const uploaded=await fetch(origin+'/api/admin/upload',{method:'POST',headers:{Origin:origin,...admin},body:uploadBody});
+    assert.equal(uploaded.status,200);const uploadUrl=(await uploaded.json()).url;
+    assert.match(uploadUrl,/^\/assets\/uploads\/[A-Za-z0-9_-]+\.webp$/);
+    const served=await fetch(origin+uploadUrl);assert.equal(served.status,200);assert.match(served.headers.get('content-type'),/^image\/webp/);
     const list=(await req('/api/events')).data,e=list[0];
     const created=await req('/api/reservations',{method:'POST',body:{eventId:e.id,name:'HTTP Test',email:'http-test@example.com',acceptedTerms:true,items:[{tierId:e.tiers[0].id,quantity:1}]}});
     assert.equal(created.status,200);const{id,key}=created.data,guest={'x-order-token':key};
@@ -68,5 +74,7 @@ test('HTTP flow: secure admin, reservation, signed payment, QR, retrieval, admis
     server.kill();await exited;
     assert.ok(dbPath.startsWith(path.resolve('data')+path.sep+'integration-'));
     for(const suffix of ['','-wal','-shm'])if(existsSync(dbPath+suffix))rmSync(dbPath+suffix);
+    assert.ok(uploadsPath.startsWith(path.resolve('data')+path.sep+'integration-uploads-'));
+    if(existsSync(uploadsPath))rmSync(uploadsPath,{recursive:true});
   }
 });
