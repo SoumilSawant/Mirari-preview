@@ -1,0 +1,11 @@
+node_modules/
+data/
+.env
+.local-admin.txt
+.tools/
+.reference/
+test-results/
+playwright-report/
+assets/uploads/
+output/backups/
+output/

@@ -1,0 +1,30 @@
+{
+  "name": "mirari-ticket-platform",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env server.js",
+    "dev:stripe": "node --env-file=.env scripts/dev-stripe.mjs",
+    "start": "node --env-file-if-exists=.env server.js",
+    "backup": "node --env-file-if-exists=.env scripts/backup-db.mjs",
+    "mfa-secret": "node scripts/generate-mfa-secret.mjs",
+    "test": "node --test tests/*.test.js",
+    "check": "node --check server.js && node --check scripts/dev-stripe.mjs && node --check lib/store.js && node --check lib/auth.js && node --check lib/payment-guard.js && node --check lib/checkout.js && node --check lib/mode.js && node --check public/app.js && node --check public/admin.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "jsqr": "^1.4.0",
+    "multer": "^2.0.2",
+    "qrcode": "^1.5.4",
+    "sharp": "^0.35.5",
+    "stripe": "^19.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0"
+  }
+}

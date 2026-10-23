@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#351215">
+  <meta name="description" content="Discover your next Mirari moment. Explore live events across the UK and book your tickets.">
+  <title>Mirari · The night is yours</title>
+  <link rel="icon" href="/assets/mirari-logo-transparent.png">
+  <link rel="preload" as="image" href="/assets/hero.webp">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header id="header">
+    <a class="brand" href="/" aria-label="Mirari home"><img src="/assets/mirari-logo-transparent.png" alt="Mirari" width="140" height="80"></a>
+    <nav id="nav" aria-label="Main navigation"><a href="/events">Events</a><a href="/#atlas">Explore</a><a href="/#about">About</a><a class="nav-ticket" href="/my-tickets"><span aria-hidden="true">◇</span> My tickets</a></nav>
+    <button class="menu-button" id="menu-button" aria-label="Open navigation" aria-expanded="false" aria-controls="nav"><span></span><span></span></button>
+  </header>
+  <div id="demo-notice" hidden>DEMO EXPERIENCE <span>Explore sample events. No real payments or admission.</span></div>
+  <main id="main" tabindex="-1"><div class="loading">Preparing your next moment…</div></main>
+  <footer>
+    <div class="footer-top"><div><a class="wordmark" href="/">MIRARI</a><p>For the moments that stay with you.<br>Live experiences across the UK.</p></div><div><span class="eyebrow">DISCOVER</span><a href="/events">Upcoming events</a><a href="/#atlas">The Night Atlas</a><a href="/my-tickets">My tickets</a></div><div><span class="eyebrow">HERE TO HELP</span><a href="/policy/contact">Contact Mirari</a><a href="/policy/accessibility">Accessibility</a><a href="/policy/refunds">Refunds & changes</a></div></div>
+    <div class="footer-bottom"><span>© <span id="year"></span> Mirari</span><div><a href="/policy/privacy">Privacy</a><a href="/policy/terms">Terms</a><a href="/policy/cookies">Cookies</a><a href="/admin">Organiser sign-in</a></div></div>
+  </footer>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <dialog id="confirm-dialog"><h2 id="confirm-title">Confirm action</h2><p id="confirm-copy"></p><div class="actions"><button class="button ghost" id="confirm-no">Go back</button><button class="button" id="confirm-yes">Confirm</button></div></dialog>
+  <noscript><p class="notice">Please enable JavaScript to browse events and book tickets.</p></noscript>
+</body>
+</html>
