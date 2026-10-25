@@ -76,8 +76,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold);background:#230
 @media(max-width:760px){.hero{min-height:650px;height:auto;max-height:none;padding:112px 7% 95px}.hero h1{font-size:clamp(48px,12.3vw,72px)}.hero-copy>p{font-size:16px;max-width:440px}.experience-grid{grid-template-columns:1fr}.experience-card{min-height:0;padding:25px}.experience-card .eyebrow{margin-bottom:16px}.community{display:block}.community .button{margin-top:14px}}
 .event-image.poster-art{background:#f8edd7}.event-image.poster-art img{object-fit:contain}.event-card:hover .poster-art img{transform:none}.poster-hero{background:linear-gradient(110deg,#371319,#6c2920)}.poster-hero img{opacity:.16;filter:blur(12px)}.event-poster{max-width:570px;margin:0 auto 30px;border:1px solid var(--line);background:#f8edd7;border-radius:4px;overflow:hidden}.event-poster img{display:block;width:100%;height:auto;object-fit:contain}
 
-/* Give the shared Mirari mark enough room to read at a glance on every page. */
-.brand{position:relative;display:flex;align-items:center;justify-content:center;width:190px;height:100px;margin-top:4px;isolation:isolate}
-.brand::before{content:'';position:absolute;z-index:-1;width:142px;height:76px;border-radius:50%;background:radial-gradient(ellipse,rgba(236,201,151,.12),transparent 72%);filter:blur(8px)}
-.brand img{width:100%;height:100%;object-fit:contain;filter:brightness(1.16) contrast(1.08) drop-shadow(0 3px 10px rgba(8,2,4,.34))}
-@media(max-width:760px){.brand{width:150px;height:78px;margin-top:2px}.brand::before{width:116px;height:58px}}
+/* Crop the detailed crest to its readable wordmark at navigation size. */
+.brand{position:relative;display:block;flex:0 0 145px;width:145px;height:60px;margin:0;overflow:hidden}
+.brand img{position:absolute;display:block;width:240px;height:auto;max-width:none;left:50%;top:50%;transform:translate(-50%,-50%);clip-path:inset(43% 0 32%)}
+@media(max-width:760px){.brand{flex-basis:122px;width:122px;height:54px}.brand img{width:210px}}

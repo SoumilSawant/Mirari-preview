@@ -51,6 +51,11 @@ try {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(origin);
+    assert.equal(await page.locator('.brand').evaluate(brand => {
+      const header = brand.closest('header').getBoundingClientRect();
+      const logo = brand.getBoundingClientRect();
+      return logo.top >= header.top && logo.bottom <= header.bottom;
+    }), true, `Header logo extends beyond the header at ${viewport.width}px`);
     await page.locator('#demo-notice').getByText('STRIPE TEST MODE').waitFor();
     assert.equal(await page.locator('.event-card').count(), 1);
     assert.equal(await page.locator('.event-card .tag').count(), 0);
