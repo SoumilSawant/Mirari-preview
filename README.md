@@ -30,6 +30,14 @@ Copy `.env.example` to `.env` to configure settings. Restart after environment c
 
 Admin also supports event creation/editing, publication, postponement, cancellation, artwork uploads, ticket tiers, capacities, sales windows, orders, attendees, full refunds, email retries, editable policies and an audit trail.
 
+### Mirari content and Diwali Pahat announcement
+
+The homepage uses Mirari's supplied London cultural-experiences copy. Its current hero and About photographs remain illustrative assets; they are not photographs of an actual Mirari event. The five experience categories and the community section provide information but do **not** collect newsletter addresses. Do not claim customers can subscribe until an approved mailing flow exists.
+
+The supplied `diwali 1.png` is preserved as `assets/originals/diwali-pahat-2026.png` and optimised to `assets/diwali-pahat-2026.webp`. `content/diwali-pahat-london-2026.json` records the confirmed 8 November 2026, 11:00 GMT, Pembroke Lodge announcement and the supplied event wording. The map coordinates are approximate and need organiser verification against the venue before ticket sales. Planned highlights remain labelled as such, including the food vendor caveat. The event has **no ticket tiers or prices** and uses `announced` status: it appears publicly as “Tickets coming soon”, with checkout hidden and server-side reservations rejected. A `draft` remains hidden; only a `published` event with at least one valid tier can accept bookings.
+
+To add the announcement to an existing **Stripe test** database, first take a backup, then run `npm run import:event-announcement` with explicit `APP_MODE=stripe-test` and `DATABASE_PATH` in the private `.env`. The importer refuses to create a database, overwrite an organiser-edited event, or add any price. The local staging database received this announcement after a verified backup. The JSON manifest makes it reproducible in a later clean environment; do not copy staging orders into a live database. After the organiser supplies final ticket tiers, capacities, sales windows, doors time, age/ID rules, access information, support contact and approved policies, edit the event in Admin and publish only after testing. A live environment is not implemented in this version.
+
 Cancelling an event blocks admission and queues customer updates; it does **not** automatically refund all orders. Refund affected orders in Orders. Capacity is allocated per tier, so the sum of tier capacities must match your venue allocation.
 
 Do not publicly share order links or QR tokens.
@@ -127,6 +135,7 @@ npm run check
 npm test
 node tests/ui.mjs
 node tests/mode-ui.mjs
+node tests/content-ui.mjs
 ```
 
 Tests cover expiry, provider-backed holds, concurrent last-ticket booking, capacity/sales limits, payment binding, out-of-order and duplicate events, refunds, disputes, restart durability, migration and backup restoration, cancellation, invalid/duplicate/refunded admission and an isolated HTTP customer/admin flow. Mode-switch tests cover historical demo events, orders, mail and admission after a restart. The two browser scripts check desktop and mobile customer/admin pages in demo and Stripe test modes. HTTP tests include signed mock provider events, QR generation, one-use recovery, event creation and refunds; they make no real charges. Run a separate end-to-end test with real Stripe test-mode credentials and a configured webhook endpoint before any launch, including 3DS, async payment failure, refund success/failure and dispute events. Confirm the Resend verified sender delivers to a real test inbox. Demo mode never calls Stripe for a charge or sends email.

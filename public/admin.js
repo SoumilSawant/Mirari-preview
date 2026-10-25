@@ -46,15 +46,16 @@ export async function renderAdmin(c) {
   }
   async function editEvent(e={}){
     content.innerHTML=`<div class="page-title-row"><h2>${e.id?'Edit event':'Create an event'}</h2><button class="button ghost small" id="back-events">Back to events</button></div><form class="panel" id="event-editor"><div class="form-grid">${field('title','Event name',e.title,'text',true)}${field('city','City',e.city||'London','text',true)}
-      <label class="field"><span>Status</span><select name="status">${['draft','published','postponed','cancelled'].map(s=>`<option ${e.status===s?'selected':''}>${s}</option>`).join('')}</select></label>${field('category','Experience / category',e.category||'Live music')}
+      <label class="field"><span>Status</span><select name="status">${['draft','announced','published','postponed','cancelled'].map(s=>`<option ${e.status===s?'selected':''}>${s}</option>`).join('')}</select></label>${field('category','Experience / category',e.category||'Live music')}
       ${field('startAt','Event starts · UK local time',ukInput(e.startAt),'datetime-local',true)}${field('doorsAt','Doors open · UK local time',ukInput(e.doorsAt),'datetime-local')}
       ${field('venue','Venue name',e.venue,'text',true)}${field('address','Full venue address',e.address,'text',true)}
       ${field('lat','Latitude (UK)',e.lat??51.5074,'number',true)}${field('lng','Longitude (UK)',e.lng??-0.1278,'number',true)}
       ${field('age','Age & ID requirements',e.age)}${field('image','Event image URL',e.image||'/assets/hero.webp')}
+      <label class="field"><span>Event image layout</span><select name="imageFit"><option value="cover" ${e.imageFit!=='contain'?'selected':''}>Landscape photo · fill frame</option><option value="contain" ${e.imageFit==='contain'?'selected':''}>Poster · show full artwork</option></select></label>
       <label class="field wide"><span>Upload event image · JPEG, PNG or WebP, up to 8 MB</span><input type="file" id="upload-image" accept="image/png,image/jpeg,image/webp"><small id="upload-status"></small></label>
       ${area('description','Description',e.description)}${area('lineup','Programme / line-up',e.lineup)}${area('accessibility','Access information and companion tickets',e.accessibility)}${area('policy','Event-specific booking / transfer policy',e.policy)}${area('notice','Customer update (for changes or cancellations)',e.notice)}
       </div><label class="check-field"><input type="checkbox" name="demo" ${e.demo?'checked disabled':''}><span>Demonstration event — permanently labelled; create a new event for Stripe testing</span></label>
-      <h3 style="margin-top:30px">Ticket tiers</h3><p class="help-text">Enter the all-in price in pounds. Tiers share no capacity: allocate the venue’s total capacity across them. Sales dates use UK local time.</p><div id="tier-editors"></div><button type="button" class="button ghost small" id="add-tier">Add tier +</button><p class="notice" style="margin-top:25px">Changing an event’s date or status queues an update for paid customers. Cancellation blocks admission; refund affected orders in Orders.</p><p class="form-error" role="alert"></p><button type="submit" class="button">Save event ↗</button></form>`;
+      <h3 style="margin-top:30px">Ticket tiers</h3><p class="help-text">Enter the all-in price in pounds. Tiers share no capacity: allocate the venue’s total capacity across them. Sales dates use UK local time. Draft and announced events may have no tiers; only published events can sell tickets.</p><div id="tier-editors"></div><button type="button" class="button ghost small" id="add-tier">Add tier +</button><p class="notice" style="margin-top:25px">Changing an event’s date or status queues an update for paid customers. Cancellation blocks admission; refund affected orders in Orders.</p><p class="form-error" role="alert"></p><button type="submit" class="button">Save event ↗</button></form>`;
     for(const name of ['lat','lng'])$(`[name="${name}"]`).step='any';
     $('#back-events').onclick=()=>eventList();
     function addTier(t={}){
@@ -63,7 +64,7 @@ export async function renderAdmin(c) {
       $('[name=tierPrice]',row).step='.01';$('[name=tierPrice]',row).min='1';$('[name=tierCapacity]',row).min='0';
       $('button',row).onclick=()=>row.remove();$('#tier-editors').append(row);
     }
-    (e.tiers||[{}]).forEach(addTier);$('#add-tier').onclick=()=>addTier();
+    (e.id?e.tiers||[]:[{}]).forEach(addTier);$('#add-tier').onclick=()=>addTier();
     $('#upload-image').onchange=async ev=>{
       if(!ev.target.files[0])return;$('#upload-status').textContent='Uploading…';
       try{const body=new FormData();body.append('image',ev.target.files[0]);const r=await api('/api/admin/upload',{method:'POST',body});$('[name=image]').value=r.url;$('#upload-status').textContent='Image uploaded and optimised.';}catch(error){$('#upload-status').textContent=error.message;}

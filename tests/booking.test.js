@@ -11,6 +11,17 @@ const event = (capacity=3) => ({
 });
 const request=(quantity=1)=>({eventId:'event',name:'Test Guest',email:'test@example.com',items:[{tierId:'ga',quantity}]});
 function setup(capacity=3){const s=new Store();s.saveEvent(event(capacity));return s;}
+test('unpriced event can be announced but cannot be published or reserved',()=>{
+  const s=new Store();const draft=s.saveEvent({...event(),status:'draft',tiers:[],imageFit:'contain'});
+  assert.equal(draft.tiers.length,0);assert.equal(draft.imageFit,'contain');
+  assert.equal(s.events(false).some(e=>e.id==='event'),false);
+  const announcement=s.saveEvent({...draft,status:'announced',tiers:[]});
+  assert.equal(s.events(false).find(e=>e.id==='event')?.status,'announced');
+  assert.equal(announcement.tiers.length,0);
+  assert.throws(()=>s.saveEvent({...draft,status:'published',tiers:[]}),/ticket tier before publishing/);
+  assert.throws(()=>s.reserve(request()),/not currently on sale/);
+  assert.equal(s.event('event').status,'announced');s.db.close();
+});
 test('expired unpaid hold restores availability and cannot oversell',()=>{
   const s=setup(1);const o=s.reserve(request(),Date.now()-32*60000);s.expire();
   assert.equal(s.order(o.id).status,'expired');assert.equal(s.event('event').tiers[0].available,1);

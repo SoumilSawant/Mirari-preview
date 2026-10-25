@@ -12,8 +12,9 @@
     "start": "node --env-file-if-exists=.env server.js",
     "backup": "node --env-file-if-exists=.env scripts/backup-db.mjs",
     "mfa-secret": "node scripts/generate-mfa-secret.mjs",
+    "import:event-announcement": "node --env-file-if-exists=.env scripts/import-event-announcement.mjs",
     "test": "node --test tests/*.test.js",
-    "check": "node --check server.js && node --check scripts/dev-stripe.mjs && node --check lib/store.js && node --check lib/auth.js && node --check lib/payment-guard.js && node --check lib/checkout.js && node --check lib/mode.js && node --check public/app.js && node --check public/admin.js"
+    "check": "node --check server.js && node --check scripts/dev-stripe.mjs && node --check scripts/import-event-announcement.mjs && node --check lib/store.js && node --check lib/auth.js && node --check lib/payment-guard.js && node --check lib/checkout.js && node --check lib/mode.js && node --check public/app.js && node --check public/admin.js"
   },
   "dependencies": {
     "express": "^5.1.0",
