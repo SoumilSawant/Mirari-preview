@@ -79,8 +79,30 @@ try {
     assert.equal(await page.locator('#order-search').inputValue(), old.id);
     assert.deepEqual(errors, [], `Browser errors at ${viewport.width}`);
     await page.close();
+
+    // Exercise live-mode presentation only. The fixture server still rejects real payments.
+    const livePage = await browser.newPage({ viewport });
+    await livePage.route('**/api/config', route => route.fulfill({ json: {
+      mode: 'stripe-live', demo: false, live: true, salesReady: true, paymentsReady: true, emailReady: true, mfaRequired: false
+    } }));
+    await livePage.goto(`${origin}/event/mode-ui-test-event`);
+    await livePage.locator('#booking-form button[type=submit]').getByText('Continue to secure checkout').waitFor();
+    assert.equal(await livePage.locator('#demo-notice').isHidden(), true);
+    assert.equal(await livePage.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), true,
+      `Live event page overflows at ${viewport.width}`);
+    await livePage.close();
+
+    const closedPage = await browser.newPage({ viewport });
+    await closedPage.route('**/api/config', route => route.fulfill({ json: {
+      mode: 'stripe-live', demo: false, live: true, salesReady: false,
+      paymentsReady: true, emailReady: true, mfaRequired: false
+    } }));
+    await closedPage.goto(`${origin}/event/mode-ui-test-event`);
+    await closedPage.getByText('Bookings are not open yet. Please check back for updates.').waitFor();
+    assert.equal(await closedPage.locator('#booking-form button[type=submit]').isDisabled(), true);
+    await closedPage.close();
   }
-  console.log('Desktop/mobile Stripe test-mode UI, old demo order labels and admin totals passed.');
+  console.log('Desktop/mobile Stripe test UI and simulated live UI labels passed; no provider checkout was opened.');
 } finally {
   await browser?.close();
   const closed = new Promise(resolve => server.once('close', resolve));

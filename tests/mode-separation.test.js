@@ -126,12 +126,34 @@ test('demo orders, events, admission and mail remain isolated after a test-mode 
   }
 });
 
-test('live Stripe keys are rejected before a database is opened', () => {
+test('a live Stripe key in demo mode is rejected before a database is opened', () => {
   const dbPath = path.join(output, `forbidden-${randomUUID()}.sqlite`);
   const env = { ...process.env, APP_MODE: 'demo', NODE_ENV: 'test', DATABASE_PATH: dbPath, STRIPE_SECRET_KEY: 'sk_live_forbidden_fixture' };
   delete env.DEMO_MODE;
   const result = spawnSync(process.execPath, ['server.js'], { cwd: process.cwd(), env, encoding: 'utf8', timeout: 5000 });
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /Live payments are disabled/);
+  assert.match(result.stderr, /live Stripe key cannot be configured in demo mode/);
+  assert.equal(existsSync(dbPath), false);
+});
+
+test('live mode requires explicit production configuration before a database is opened', () => {
+  const dbPath = path.join(output, `unconfigured-live-${randomUUID()}.sqlite`);
+  const env = { ...process.env, APP_MODE: 'stripe-live', NODE_ENV: 'test', DATABASE_PATH: dbPath,
+    STRIPE_SECRET_KEY: 'sk_live_fixture', STRIPE_WEBHOOK_SECRET: 'whsec_fixture', ENABLE_LIVE_PAYMENTS: 'true' };
+  delete env.DEMO_MODE;
+  const result = spawnSync(process.execPath, ['server.js'], { cwd: process.cwd(), env, encoding: 'utf8', timeout: 5000 });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Stripe live mode requires production/);
+  assert.equal(existsSync(dbPath), false);
+});
+
+test('a wildcard proxy trust setting is rejected before opening a database', () => {
+  const dbPath = path.join(output, `unsafe-proxy-${randomUUID()}.sqlite`);
+  const env = { ...process.env, APP_MODE: 'demo', NODE_ENV: 'test', DATABASE_PATH: dbPath,
+    STRIPE_SECRET_KEY: '', TRUSTED_PROXY_CIDRS: '0.0.0.0/0' };
+  delete env.DEMO_MODE;
+  const result = spawnSync(process.execPath, ['server.js'], { cwd: process.cwd(), env, encoding: 'utf8', timeout: 5000 });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Do not trust arbitrary forwarded headers/);
   assert.equal(existsSync(dbPath), false);
 });

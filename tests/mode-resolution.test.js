@@ -6,6 +6,7 @@ test('NODE_ENV alone never changes the payment mode', () => {
   assert.equal(resolveAppMode({ NODE_ENV: 'development' }), 'demo');
   assert.equal(resolveAppMode({ NODE_ENV: 'production' }), 'demo');
   assert.equal(resolveAppMode({ NODE_ENV: 'production', APP_MODE: 'stripe-test' }), 'stripe-test');
+  assert.equal(resolveAppMode({ NODE_ENV: 'production', APP_MODE: 'stripe-live' }), 'stripe-live');
 });
 
 test('legacy DEMO_MODE is supported only when it does not conflict', () => {

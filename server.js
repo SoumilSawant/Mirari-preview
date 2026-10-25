@@ -18,16 +18,32 @@ const root=path.dirname(fileURLToPath(import.meta.url)),port=Number(process.env.
 const production=process.env.NODE_ENV==='production';
 const mode=resolveAppMode();
 const demo=mode==='demo';
+const live=mode==='stripe-live';
+const renderProxy=production&&process.env.RENDER==='true'&&process.env.TRUSTED_PROXY_HOPS==='1'&&!process.env.TRUSTED_PROXY_CIDRS;
 const appUrl=process.env.APP_URL||`http://127.0.0.1:${port}`;
 const dbPath=path.resolve(root,process.env.DATABASE_PATH||'data/mirari.sqlite');
 const uploadsPath=path.resolve(root,process.env.UPLOADS_PATH||'assets/uploads');
 if(uploadsPath===root||root.startsWith(uploadsPath+path.sep)||dbPath.startsWith(uploadsPath+path.sep))throw new Error('UPLOADS_PATH must be a dedicated directory that does not contain application files or the database.');
+if(mode==='stripe-test'&&(!process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_')||!process.env.STRIPE_WEBHOOK_SECRET))throw new Error('Stripe test mode requires a test key and webhook secret.');
+if(live&&(!production||process.env.ENABLE_LIVE_PAYMENTS!=='true'||process.env.LIVE_POLICIES_APPROVED!=='true'||!process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_')||!process.env.STRIPE_WEBHOOK_SECRET||!/^acct_[a-zA-Z0-9]+$/.test(process.env.STRIPE_ACCOUNT_ID||'')||!process.env.DATABASE_PATH||!path.isAbsolute(process.env.DATABASE_PATH)||!process.env.UPLOADS_PATH||!path.isAbsolute(process.env.UPLOADS_PATH)))throw new Error('Stripe live mode requires production, explicit payment and policy approval flags, a live key and webhook secret, the expected Stripe account ID, and absolute dedicated database and uploads paths.');
+if(demo&&process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_'))throw new Error('A live Stripe key cannot be configured in demo mode.');
+if(process.env.TRUSTED_PROXY_CIDRS?.split(',').some(value=>['0.0.0.0/0','::/0','*'].includes(value.trim())))throw new Error('Do not trust arbitrary forwarded headers; configure a specific reverse proxy.');
+if(process.env.TRUSTED_PROXY_HOPS&&!renderProxy)throw new Error('TRUSTED_PROXY_HOPS=1 is supported only for a Render production service without TRUSTED_PROXY_CIDRS.');
+if(production&&(!process.env.ADMIN_PASSWORD||!process.env.ADMIN_EMAIL||!process.env.ADMIN_TOTP_SECRET||!(process.env.TRUSTED_PROXY_CIDRS||renderProxy)||!appUrl.startsWith('https://')||!demo&&(!process.env.RESEND_API_KEY||!process.env.EMAIL_FROM))) throw new Error('Production requires admin credentials and MFA, a trusted proxy, HTTPS APP_URL, and email delivery for provider bookings.');
 mkdirSync(path.dirname(dbPath),{recursive:true});mkdirSync(uploadsPath,{recursive:true});
-if(process.env.STRIPE_SECRET_KEY&&!process.env.STRIPE_SECRET_KEY.startsWith('sk_test_')) throw new Error('Only Stripe sk_test_ keys are permitted. Live payments are disabled.');
-if(!demo&&(!process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_')||!process.env.STRIPE_WEBHOOK_SECRET))throw new Error('Stripe test mode requires STRIPE_SECRET_KEY=sk_test_... and STRIPE_WEBHOOK_SECRET.');
-if(production&&(!process.env.ADMIN_PASSWORD||!process.env.ADMIN_EMAIL||!process.env.ADMIN_TOTP_SECRET||!process.env.TRUSTED_PROXY_CIDRS||!appUrl.startsWith('https://')||!demo&&(!process.env.RESEND_API_KEY||!process.env.EMAIL_FROM))) throw new Error('Production requires admin credentials and MFA, a trusted proxy, HTTPS APP_URL, and email delivery in Stripe test mode.');
-const store=new Store(dbPath,{mode});if(demo) seed(store);else store.supersedeStaleMail();
+const store=new Store(dbPath,{mode});
+if(live){
+  const marker=store.setting('system.payment_mode');
+  if(marker&&marker!==mode||!marker&&['events','orders','mail','checkout_attempts','provider_events'].some(table=>store.get(`SELECT COUNT(*) n FROM ${table}`).n))throw new Error('Live mode requires a clean dedicated database; never reuse demo or Stripe test data.');
+  if(store.get("SELECT 1 FROM orders WHERE booking_mode<>'stripe-live'")||store.get("SELECT 1 FROM mail WHERE origin_mode<>'stripe-live'"))throw new Error('Live database contains bookings or messages from another payment environment.');
+  if(!marker)store.setSetting('system.payment_mode',mode);
+}
+if(demo) seed(store);else store.supersedeStaleMail();
 const stripe=process.env.STRIPE_SECRET_KEY?new Stripe(process.env.STRIPE_SECRET_KEY):null;
+if(live){
+  const account=await stripe.accounts.retrieve();
+  if(account.id!==process.env.STRIPE_ACCOUNT_ID||account.charges_enabled!==true)throw new Error('Live Stripe account identity or payment capability does not match the configured account.');
+}
 let adminEmail=process.env.ADMIN_EMAIL||'admin@mirari.local',adminPassword=process.env.ADMIN_PASSWORD;
 if(!adminPassword){
   const file=path.join(root,'.local-admin.txt');
@@ -39,6 +55,7 @@ const salt=randomBytes(16),adminHash=await derivePassword(adminPassword,salt,64)
 if(process.env.ADMIN_TOTP_SECRET&&!/^[A-Z2-7]{32,}$/i.test(process.env.ADMIN_TOTP_SECRET.replace(/\s|=/g,'')))throw new Error('ADMIN_TOTP_SECRET must be a Base32 authenticator secret.');
 const app=express();app.disable('x-powered-by');
 if(process.env.TRUSTED_PROXY_CIDRS)app.set('trust proxy',process.env.TRUSTED_PROXY_CIDRS.split(',').map(s=>s.trim()).filter(Boolean));
+else if(renderProxy)app.set('trust proxy',1);
 app.use(helmet({contentSecurityPolicy:{directives:{defaultSrc:["'self'"],scriptSrc:["'self'"],styleSrc:["'self'","'unsafe-inline'"],imgSrc:["'self'","data:"],fontSrc:["'self'"],connectSrc:["'self'"],mediaSrc:["'self'","blob:"],objectSrc:["'none'"],frameAncestors:["'none'"],upgradeInsecureRequests:production?[]:null}},crossOriginEmbedderPolicy:false,strictTransportSecurity:production?undefined:false,referrerPolicy:{policy:'no-referrer'}}));
 app.use('/api',(_req,res,next)=>{res.set('Cache-Control','no-store');next();});
 const limited=(max=20)=>{
@@ -62,7 +79,7 @@ async function providerPaymentState(paymentId){
 function applyStripeState(paymentId,state){store.applyProviderSnapshot(paymentId,state);}
 async function processStripeEvent(e){
   if(!stripeEventTypes.has(e.type))return 'ignored';
-  if(!demo&&e.livemode!==false)throw new Error('Expected a Stripe test-mode event.');
+  if(!demo&&e.livemode!==live)throw new Error('Stripe event payment mode does not match this environment.');
   const object=e.data?.object||{};
   if(e.type.startsWith('checkout.session.')){
     const s=demo?object:await stripe.checkout.sessions.retrieve(object.id);
@@ -110,7 +127,8 @@ const cookie=(req,name)=>(req.headers.cookie||'').split(';').map(s=>s.trim()).fi
 function auth(req,res,next){const s=store.get('SELECT * FROM sessions WHERE hash=? AND expires>?',hash(cookie(req,'mirari_admin')||''),Date.now());if(!s)return res.status(401).json({error:'Please sign in to the organiser area.'});req.actor=s.email;next();}
 function privateOrder(req){const o=store.order(req.params.id),key=req.headers['x-order-token'];if(!o||typeof key!=='string'||hash(key)!==o.access_hash)fail('Order not found or private link is invalid.',404);return o;}
 function publicOrder(o){const{access_hash,access_token,payment_id,stripe_session,refund_id,refund_request_key,...safe}=o;return safe;}
-app.get('/api/config',(_req,res)=>res.json({mode,demo,paymentsReady:demo||Boolean(stripe&&process.env.STRIPE_WEBHOOK_SECRET),emailReady:!demo&&Boolean(process.env.RESEND_API_KEY&&process.env.EMAIL_FROM),mfaRequired:Boolean(process.env.ADMIN_TOTP_SECRET)}));
+const customerPoliciesReady=()=>['terms','refunds','privacy','contact'].every(k=>store.setting(`policy.${k}`).trim());
+app.get('/api/config',(_req,res)=>res.json({mode,demo,live,salesReady:!live||Boolean(customerPoliciesReady()&&stripe&&process.env.RESEND_API_KEY&&process.env.EMAIL_FROM),paymentsReady:demo||Boolean(stripe&&process.env.STRIPE_WEBHOOK_SECRET),emailReady:!demo&&Boolean(process.env.RESEND_API_KEY&&process.env.EMAIL_FROM),mfaRequired:Boolean(process.env.ADMIN_TOTP_SECRET)}));
 app.get('/api/health',(_req,res)=>{store.get('SELECT 1');res.json({status:'ok',mode});});
 app.get('/api/ready',(_req,res)=>{store.get('SELECT 1');const ready=demo||Boolean(stripe&&process.env.STRIPE_WEBHOOK_SECRET&&process.env.RESEND_API_KEY&&process.env.EMAIL_FROM);res.status(ready?200:503).json({ready,mode});});
 app.get('/api/events',(_req,res)=>res.json(store.events(false,demo)));
@@ -125,8 +143,9 @@ async function ensureCheckoutSession(order, attempt){
 app.post('/api/reservations',limited(),async(req,res)=>{
   const event=store.event(req.body.eventId);
   if(!demo&&(!stripe||!process.env.STRIPE_WEBHOOK_SECRET))fail('Booking is not yet configured. Please contact Mirari.',503);
+  if(live&&(!process.env.RESEND_API_KEY||!process.env.EMAIL_FROM))fail('Booking is unavailable while ticket email delivery is not configured.',503);
   if(!demo&&event?.demo)fail('Demonstration events cannot be purchased.',409);
-  if(!demo&&['terms','refunds','privacy','contact'].some(k=>!store.setting(`policy.${k}`).trim()))fail('Booking will open after the organiser publishes its customer policies.',503);
+  if(!demo&&!customerPoliciesReady())fail('Booking will open after the organiser publishes its customer policies.',503);
   if(req.body.acceptedTerms!==true)fail('Please accept the event and booking terms.');
   const o=store.reserve(req.body);
   if(demo)return res.json({id:o.id,key:o.access_token,url:`/order/${o.id}#key=${o.access_token}`});
@@ -176,6 +195,7 @@ app.post('/api/admin/login',limited(5),async(req,res)=>{
 });
 app.use('/api/admin',auth);
 app.get('/api/admin/me',(req,res)=>res.json({email:req.actor}));
+app.get('/api/admin/network',(req,res)=>res.json({clientIp:req.ip,proxyIp:req.socket.remoteAddress,forwardedFor:req.headers['x-forwarded-for']||null}));
 app.post('/api/admin/logout',(req,res)=>{store.run('DELETE FROM sessions WHERE hash=?',hash(cookie(req,'mirari_admin')||''));res.clearCookie('mirari_admin',{path:'/api/admin'});res.json({ok:true});});
 app.get('/api/admin/events',(_req,res)=>res.json(store.events(true)));
 app.post('/api/admin/events',(req,res)=>res.json(store.saveEvent(req.body,req.actor)));
@@ -183,6 +203,7 @@ app.get('/api/admin/orders',(_req,res)=>res.json(store.all('SELECT id FROM order
 app.get('/api/admin/audit',(_req,res)=>res.json(store.all('SELECT * FROM audit ORDER BY id DESC LIMIT 200')));
 app.get('/api/admin/alerts',(_req,res)=>res.json(store.all("SELECT * FROM alerts WHERE status='open' ORDER BY created_at DESC LIMIT 200")));
 app.get('/api/admin/health',(_req,res)=>res.json({
+  salesReady:!live||Boolean(customerPoliciesReady()&&stripe&&process.env.RESEND_API_KEY&&process.env.EMAIL_FROM),
   alerts:store.get("SELECT COUNT(*) n FROM alerts WHERE status<>'resolved'").n,
   failedMail:store.get("SELECT COUNT(*) n FROM mail WHERE status='failed'").n,
   unprocessedWebhooks:store.get("SELECT COUNT(*) n FROM provider_events WHERE result='received'").n,
@@ -247,26 +268,26 @@ async function reconcile(){
     for(const row of store.all("SELECT payload FROM provider_events WHERE result='received' ORDER BY received_at LIMIT 20")){
       try{await processStripeEvent(JSON.parse(row.payload));}catch(error){store.alert('webhook_retry','provider','Some signed Stripe events still need processing. Check provider access and webhook logs.');console.error('Webhook retry failed',error.name);}
     }
-    for(const a of store.all("SELECT a.* FROM checkout_attempts a JOIN orders o ON o.id=a.order_id WHERE a.session_id IS NULL AND o.status='pending' ORDER BY a.updated_at LIMIT 20")){
+    for(const a of store.all("SELECT a.* FROM checkout_attempts a JOIN orders o ON o.id=a.order_id WHERE a.session_id IS NULL AND o.status='pending' AND o.booking_mode=? ORDER BY a.updated_at LIMIT 20",mode)){
       try{
         const order=store.order(a.order_id);
         if(Date.now()-a.created_at>24*3600000){store.alert('checkout_attempt',a.order_id,'An unbound Checkout attempt exceeded Stripe idempotency retention. Resolve manually before releasing seats.');continue;}
         const session=await ensureCheckoutSession(order,a);
-        if(session.payment_status==='paid'||session.status==='expired')await processStripeEvent({id:`reconcile-unbound-${session.id}-${session.payment_status}`,type:session.payment_status==='paid'?'checkout.session.completed':'checkout.session.expired',livemode:false,data:{object:session}});
+        if(session.payment_status==='paid'||session.status==='expired')await processStripeEvent({id:`reconcile-unbound-${session.id}-${session.payment_status}`,type:session.payment_status==='paid'?'checkout.session.completed':'checkout.session.expired',livemode:live,data:{object:session}});
       }catch(error){store.alert('checkout_attempt',a.order_id,'Unbound Checkout reconciliation failed. Review Stripe and the reservation.');console.error('Unbound Checkout reconciliation failed',a.order_id,error.name);}
       finally{store.run('UPDATE checkout_attempts SET updated_at=? WHERE order_id=?',Date.now(),a.order_id);}
     }
     for(const o of store.pendingCheckoutReconciliation()){
     try{const s=await stripe.checkout.sessions.retrieve(o.stripe_session);
-      if(s.payment_status==='paid'||s.status==='expired')await processStripeEvent({id:`reconcile-${s.id}-${s.payment_status}-${s.status}`,type:s.payment_status==='paid'?'checkout.session.completed':'checkout.session.expired',livemode:false,data:{object:s}});
+      if(s.payment_status==='paid'||s.status==='expired')await processStripeEvent({id:`reconcile-${s.id}-${s.payment_status}-${s.status}`,type:s.payment_status==='paid'?'checkout.session.completed':'checkout.session.expired',livemode:live,data:{object:s}});
       else if(Date.now()-o.expires>10*60000)store.alert('stuck_checkout',o.id,'A checkout hold is overdue. Confirm its Stripe status before releasing inventory.');
     }catch(error){store.alert('checkout_reconcile',o.id,'Checkout reconciliation failed; seats remain held. Check Stripe access.');console.error('Checkout reconciliation failed',o.id,error.name);}
     finally{store.markReconcile('checkout',o.id);}
     }
     const unresolved=store.paymentReconciliationCandidates();
     const paidAudit=store.all(`SELECT o.* FROM orders o LEFT JOIN reconcile_marks m ON m.kind='payment' AND m.subject=o.id
-      WHERE o.status='paid' AND o.payment_id IS NOT NULL AND o.payment_id<>'demo' AND COALESCE(m.last_attempt,0)<?
-      ORDER BY COALESCE(m.last_attempt,0) LIMIT 10`,Date.now()-5*60000);
+      WHERE o.status='paid' AND o.booking_mode=? AND o.payment_id IS NOT NULL AND o.payment_id<>'demo' AND COALESCE(m.last_attempt,0)<?
+      ORDER BY COALESCE(m.last_attempt,0) LIMIT 10`,mode,Date.now()-5*60000);
     for(const o of [...unresolved,...paidAudit]){
       try{
         const state=await providerPaymentState(o.payment_id);
