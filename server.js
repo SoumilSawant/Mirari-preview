@@ -19,6 +19,10 @@ const production=process.env.NODE_ENV==='production';
 const mode=resolveAppMode();
 const demo=mode==='demo';
 const live=mode==='stripe-live';
+const publicSalesChannel=process.env.PUBLIC_SALES_CHANNEL||'mirari';
+if(!['mirari','ticket-tailor'].includes(publicSalesChannel))throw new Error('PUBLIC_SALES_CHANNEL must be mirari or ticket-tailor.');
+const ticketTailorOnly=publicSalesChannel==='ticket-tailor';
+if(ticketTailorOnly&&mode!=='stripe-test')throw new Error('Ticket Tailor public sales require APP_MODE=stripe-test so Mirari live payments remain disabled.');
 const renderProxy=production&&process.env.RENDER==='true'&&process.env.TRUSTED_PROXY_HOPS==='1'&&!process.env.TRUSTED_PROXY_CIDRS;
 const appUrl=process.env.APP_URL||`http://127.0.0.1:${port}`;
 const dbPath=path.resolve(root,process.env.DATABASE_PATH||'data/mirari.sqlite');
@@ -125,14 +129,14 @@ app.use('/api',(req,res,next)=>{
 });
 const cookie=(req,name)=>(req.headers.cookie||'').split(';').map(s=>s.trim()).find(s=>s.startsWith(`${name}=`))?.slice(name.length+1);
 function auth(req,res,next){const s=store.get('SELECT * FROM sessions WHERE hash=? AND expires>?',hash(cookie(req,'mirari_admin')||''),Date.now());if(!s)return res.status(401).json({error:'Please sign in to the organiser area.'});req.actor=s.email;next();}
-function privateOrder(req){const o=store.order(req.params.id),key=req.headers['x-order-token'];if(!o||typeof key!=='string'||hash(key)!==o.access_hash)fail('Order not found or private link is invalid.',404);return o;}
+function privateOrder(req){if(ticketTailorOnly)fail('Mirari ticket pages are unavailable because tickets are managed by Ticket Tailor.',404);const o=store.order(req.params.id),key=req.headers['x-order-token'];if(!o||typeof key!=='string'||hash(key)!==o.access_hash)fail('Order not found or private link is invalid.',404);return o;}
 function publicOrder(o){const{access_hash,access_token,payment_id,stripe_session,refund_id,refund_request_key,...safe}=o;return safe;}
 const customerPoliciesReady=()=>['terms','refunds','privacy','contact'].every(k=>store.setting(`policy.${k}`).trim());
-app.get('/api/config',(_req,res)=>res.json({mode,demo,live,salesReady:!live||Boolean(customerPoliciesReady()&&stripe&&process.env.RESEND_API_KEY&&process.env.EMAIL_FROM),paymentsReady:demo||Boolean(stripe&&process.env.STRIPE_WEBHOOK_SECRET),emailReady:!demo&&Boolean(process.env.RESEND_API_KEY&&process.env.EMAIL_FROM),mfaRequired:Boolean(process.env.ADMIN_TOTP_SECRET)}));
+app.get('/api/config',(_req,res)=>res.json({mode,demo,live,publicSalesChannel,salesReady:ticketTailorOnly||!live||Boolean(customerPoliciesReady()&&stripe&&process.env.RESEND_API_KEY&&process.env.EMAIL_FROM),paymentsReady:demo||Boolean(stripe&&process.env.STRIPE_WEBHOOK_SECRET),emailReady:!demo&&Boolean(process.env.RESEND_API_KEY&&process.env.EMAIL_FROM),mfaRequired:Boolean(process.env.ADMIN_TOTP_SECRET)}));
 app.get('/api/health',(_req,res)=>{store.get('SELECT 1');res.json({status:'ok',mode});});
 app.get('/api/ready',(_req,res)=>{store.get('SELECT 1');const ready=demo||Boolean(stripe&&process.env.STRIPE_WEBHOOK_SECRET&&process.env.RESEND_API_KEY&&process.env.EMAIL_FROM);res.status(ready?200:503).json({ready,mode});});
-app.get('/api/events',(_req,res)=>res.json(store.events(false,demo)));
-app.get('/api/events/:id',(req,res)=>{store.expire();const e=store.event(req.params.id);if(!e||e.status==='draft')fail('Event not found.',404);res.json(e);});
+app.get('/api/events',(_req,res)=>res.json(store.events(false,demo).filter(e=>!ticketTailorOnly||(!e.demo&&Boolean(e.externalBookingUrl)))));
+app.get('/api/events/:id',(req,res)=>{store.expire();const e=store.event(req.params.id);if(!e||e.status==='draft'||ticketTailorOnly&&(e.demo||!e.externalBookingUrl))fail('Event not found.',404);res.json(e);});
 app.get('/api/policies/:key',(req,res)=>{
   if(!['terms','refunds','privacy','cookies','accessibility','contact'].includes(req.params.key))fail('Page not found.',404);
   res.json({title:req.params.key,body:store.setting(`policy.${req.params.key}`),contact:store.setting('policy.contact')});
@@ -141,6 +145,7 @@ async function ensureCheckoutSession(order, attempt){
   return ensureCheckout(store,stripe,order,attempt,appUrl,process.env.STRIPE_PAYMENT_METHODS||'card');
 }
 app.post('/api/reservations',limited(),async(req,res)=>{
+  if(ticketTailorOnly)fail('Tickets for public events are booked through Ticket Tailor.',409);
   const event=store.event(req.body.eventId);
   if(!demo&&(!stripe||!process.env.STRIPE_WEBHOOK_SECRET))fail('Booking is not yet configured. Please contact Mirari.',503);
   if(live&&(!process.env.RESEND_API_KEY||!process.env.EMAIL_FROM))fail('Booking is unavailable while ticket email delivery is not configured.',503);
@@ -174,12 +179,14 @@ app.post('/api/orders/:id/resume',async(req,res)=>{
   res.json({url:session.url});
 });
 app.post('/api/tickets/retrieve',limited(5),(req,res)=>{
+  if(ticketTailorOnly)fail('Ticket delivery and recovery are managed by Ticket Tailor.',404);
   if(!demo&&(!process.env.RESEND_API_KEY||!process.env.EMAIL_FROM))fail('Email delivery is temporarily unavailable. Please contact Mirari to retrieve your tickets.',503);
   const email=String(req.body.email||'').trim().toLowerCase();
   if(store.get("SELECT 1 FROM orders WHERE email=? AND booking_mode=? AND status IN ('paid','refunded','refunding','payment_review')",email,mode)){const key=token();store.run('INSERT INTO access_links(hash,email,expires,origin_mode) VALUES(?,?,?,?)',hash(key),email,Date.now()+15*60000,mode);store.queueMail(email,'Your private Mirari ticket link',`Open this link within 15 minutes to retrieve your tickets:\n${appUrl}/my-tickets#access=${key}\nThis link can be used once.`);}
   res.json({message:'If bookings match this email, a private link has been queued. Check your inbox.'});
 });
 app.post('/api/tickets/exchange',limited(10),(req,res)=>{
+  if(ticketTailorOnly)fail('Ticket delivery and recovery are managed by Ticket Tailor.',404);
   const orders=store.tx(()=>{const digest=hash(String(req.body.token||'')),link=store.get('SELECT * FROM access_links WHERE hash=? AND expires>?',digest,Date.now());if(!link||link.origin_mode!==mode)fail('This link has expired or belongs to a different booking environment. Request a new one.',410);store.run('DELETE FROM access_links WHERE hash=?',digest);return store.all("SELECT id,access_token FROM orders WHERE email=? AND booking_mode=? AND status<>'pending' ORDER BY created DESC",link.email,mode).map(r=>({id:r.id,key:r.access_token}));});res.json(orders);
 });
 app.post('/api/admin/login',limited(5),async(req,res)=>{

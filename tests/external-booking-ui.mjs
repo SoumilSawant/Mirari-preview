@@ -16,6 +16,8 @@ const database = path.join(dir, 'preview.sqlite');
 const manifest = JSON.parse(readFileSync(path.join(project, 'content/diwali-pahat-london-2026.json'), 'utf8'));
 const store = new Store(database, { mode: 'stripe-test' });
 store.saveEvent({ ...manifest, status: 'published', externalBookingEnabled: true }, 'external-ui');
+store.saveEvent({ ...manifest, id: 'hidden-native-test', title: 'Hidden Native Test Event', status: 'published',
+  externalBookingUrl: '', externalBookingEnabled: false, tiers: [{ name: 'Test ticket', price: 100, capacity: 2 }] }, 'external-ui');
 store.db.close();
 
 const port = 24000 + Math.floor(Math.random() * 10000);
@@ -28,7 +30,7 @@ const server = spawn(process.execPath, ['server.js'], {
     ...process.env,
     PORT: String(port), HOST: '127.0.0.1', APP_URL: origin,
     DATABASE_PATH: database, UPLOADS_PATH: path.join(dir, 'uploads'),
-    APP_MODE: 'stripe-test', DEMO_MODE: 'false', NODE_ENV: 'test',
+    APP_MODE: 'stripe-test', PUBLIC_SALES_CHANNEL: 'ticket-tailor', DEMO_MODE: 'false', NODE_ENV: 'test',
     ADMIN_EMAIL: adminEmail, ADMIN_PASSWORD: adminPassword, ADMIN_TOTP_SECRET: '',
     TRUSTED_PROXY_CIDRS: '', TRUSTED_PROXY_HOPS: '',
     STRIPE_SECRET_KEY: 'sk_test_external_ui_fake', STRIPE_WEBHOOK_SECRET: 'whsec_external_ui_fake',
@@ -47,6 +49,9 @@ try {
     await new Promise(resolve => setTimeout(resolve, 50));
   }
   assert.ok(ready, logs);
+  const visibleEvents = await fetch(`${origin}/api/events`).then(response => response.json());
+  assert.deepEqual(visibleEvents.map(event => event.id), [manifest.id]);
+  assert.equal((await fetch(`${origin}/api/events/hidden-native-test`)).status, 404);
   browser = await chromium.launch({ headless: true, executablePath: 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe' });
   const screenshots = path.join(project, 'output/screenshots');
   mkdirSync(screenshots, { recursive: true });
@@ -63,7 +68,9 @@ try {
     assert.match(await bookingLink.getAttribute('rel') || '', /noopener/);
     assert.equal(await page.locator('#booking-form').isVisible(), false);
     assert.match(await bookingPanel.innerText(), /real ticket purchase on Ticket Tailor/);
-    assert.match(await page.locator('#demo-notice').innerText(), /STRIPE TEST MODE.*Ticket Tailor bookings are separate/s);
+    assert.equal(await page.locator('#demo-notice').isHidden(), true);
+    assert.equal(await page.locator('a[href="/my-tickets"]:visible').count(), 0);
+    assert.equal((await page.locator('body').innerText()).includes('STRIPE TEST MODE'), false);
     assert.match(await page.locator('.facts').innerText(), /15:00/);
     assert.match(await page.locator('.detail-copy').innerText(), /contact the organiser through Ticket Tailor before buying/i);
     assert.equal(await page.locator('.detail-copy a[href="/policy/refunds"]').count(), 0);
@@ -79,8 +86,9 @@ try {
   await admin.locator('#admin-login [name=password]').fill(adminPassword);
   await admin.locator('#admin-login button[type=submit]').click();
   await admin.locator('[data-tab="Events"]').click();
-  await admin.locator('.admin-row').getByText(manifest.title).waitFor();
-  await admin.locator('.admin-row [data-edit]').click();
+  const eventRow = admin.locator('.admin-row').filter({ hasText: manifest.title });
+  await eventRow.getByText(manifest.title).waitFor();
+  await eventRow.locator('[data-edit]').click();
   assert.equal(await admin.locator('#event-editor [name=status]').inputValue(), 'published');
   assert.equal(await admin.locator('#event-editor [name=externalBookingUrl]').inputValue(), manifest.externalBookingUrl);
   assert.equal(await admin.locator('#event-editor [name=externalBookingEnabled]').isChecked(), true);
