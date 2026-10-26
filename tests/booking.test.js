@@ -18,9 +18,31 @@ test('unpriced event can be announced but cannot be published or reserved',()=>{
   const announcement=s.saveEvent({...draft,status:'announced',tiers:[]});
   assert.equal(s.events(false).find(e=>e.id==='event')?.status,'announced');
   assert.equal(announcement.tiers.length,0);
-  assert.throws(()=>s.saveEvent({...draft,status:'published',tiers:[]}),/ticket tier before publishing/);
+  assert.throws(()=>s.saveEvent({...draft,status:'published',tiers:[]}),/ticket tier or a Ticket Tailor link before publishing/);
   assert.throws(()=>s.reserve(request()),/not currently on sale/);
   assert.equal(s.event('event').status,'announced');s.db.close();
+});
+test('Ticket Tailor event can be published without mirrored tiers, but sales require an approved external link',()=>{
+  const s=new Store(':memory:',{mode:'stripe-test'});
+  const base={...event(),tiers:[],status:'announced'};
+  assert.throws(()=>s.saveEvent({...base,status:'published'}),/ticket tier or a Ticket Tailor link/);
+  assert.throws(()=>s.saveEvent({...base,status:'published',externalBookingUrl:'https://example.com/event'}),/secure Ticket Tailor/);
+  const saved=s.saveEvent({...base,status:'published',externalBookingUrl:'https://buytickets.at/mirari/diwali-pahat-2026'});
+  assert.equal(saved.tiers.length,0);assert.equal(saved.externalBookingEnabled,false);
+  assert.throws(()=>s.reserve({eventId:'event',name:'Guest',email:'guest@example.com',items:[]}),/handled by Ticket Tailor/);
+  const open=s.saveEvent({...saved,externalBookingEnabled:true,tiers:[]});
+  assert.equal(open.externalBookingEnabled,true);assert.equal(open.externalBookingUrl,'https://buytickets.at/mirari/diwali-pahat-2026');
+  const demo=new Store(':memory:',{mode:'demo'});
+  assert.throws(()=>demo.saveEvent({...base,status:'published',externalBookingUrl:'https://buytickets.at/mirari/event',externalBookingEnabled:true}),/cannot be enabled for demo events or in demo mode/);
+  assert.throws(()=>s.saveEvent({...base,status:'published',demo:true,externalBookingUrl:'https://buytickets.at/mirari/event',externalBookingEnabled:true}),/cannot be enabled for demo events or in demo mode/);
+  demo.db.close();s.db.close();
+});
+test('event end time is optional for legacy events and must follow the start time when supplied',()=>{
+  const s=new Store();
+  const started=Date.parse(event().startAt);
+  assert.throws(()=>s.saveEvent({...event(),endAt:new Date(started).toISOString()}),/end time must be after/);
+  const saved=s.saveEvent({...event(),endAt:new Date(started+2*60*60*1000).toISOString()});
+  assert.equal(saved.endAt,new Date(started+2*60*60*1000).toISOString());s.db.close();
 });
 test('expired unpaid hold restores availability and cannot oversell',()=>{
   const s=setup(1);const o=s.reserve(request(),Date.now()-32*60000);s.expire();

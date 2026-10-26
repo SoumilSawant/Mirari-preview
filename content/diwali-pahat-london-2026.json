@@ -8,6 +8,7 @@
   "lng": -0.2945,
   "category": "Festivals & Cultural Celebrations",
   "startAt": "2026-11-08T11:00:00.000Z",
+  "endAt": "2026-11-08T15:00:00.000Z",
   "doorsAt": "",
   "venue": "Pembroke Lodge",
   "address": "Richmond Park, Richmond, Surrey, TW10 5HX, United Kingdom",
@@ -19,5 +20,7 @@
   "accessibility": "",
   "policy": "",
   "notice": "",
+  "externalBookingUrl": "https://buytickets.at/mirarievents/2495970",
+  "externalBookingEnabled": false,
   "tiers": []
 }

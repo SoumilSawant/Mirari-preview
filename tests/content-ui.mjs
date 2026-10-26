@@ -42,7 +42,8 @@ try{
     await page.goto(`${origin}/event/${manifest.id}`);await page.locator('.event-poster img').waitFor();
     assert.equal(await page.locator('.event-poster img').evaluate(img=>img.complete&&img.naturalWidth>0),true);
     assert.equal(await page.locator('#booking-form').isVisible(),false);
-    assert.match(await page.locator('.booking-panel').textContent(),/Tickets are coming soon/);
+    assert.match(await page.locator('.booking-panel').textContent(),/Tickets are not open yet/);
+    assert.equal(await page.locator('.booking-panel a[href="' + manifest.externalBookingUrl + '"]').count(),0);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),true);
     await page.screenshot({path:path.join(screenshots,`mirari-content-${viewport.width}-event.png`),fullPage:true});
     await page.goto(`${origin}/admin`);await page.locator('#admin-login').waitFor();
@@ -53,6 +54,8 @@ try{
     await page.locator('.admin-row').getByText(manifest.title).waitFor();
     await page.locator('.admin-row [data-edit]').click();
     assert.equal(await page.locator('#event-editor [name=status]').inputValue(),'announced');
+    assert.equal(await page.locator('#event-editor [name=externalBookingUrl]').inputValue(),manifest.externalBookingUrl);
+    assert.equal(await page.locator('#event-editor [name=externalBookingEnabled]').isChecked(),false);
     assert.equal(await page.locator('#event-editor [name=imageFit]').inputValue(),'contain');
     assert.equal(await page.locator('.tier-editor').count(),0);
     assert.deepEqual(errors,[]);
