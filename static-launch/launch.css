@@ -1,0 +1,11 @@
+/* Static Ticket Tailor launch: customer-only refinements layered over Mirari's existing visual system. */
+body{padding-top:88px}
+.hero{margin-top:-88px;padding-top:218px}
+.brand{position:relative;display:block;flex:0 0 145px;width:145px;height:60px;margin:0;overflow:hidden}
+.brand img{position:absolute;display:block;width:240px;height:auto;max-width:none;left:50%;top:50%;transform:translate(-50%,-50%);clip-path:inset(43% 0 32%)}
+.booking-panel .button{margin-top:18px}
+.provider-note{font-size:12px;line-height:1.65;margin:16px 0 0}
+.static-noscript{margin:110px auto 30px;max-width:720px}
+.static-noscript a{text-decoration:underline;color:var(--gold)}
+.not-found{padding-top:100px}
+@media(max-width:760px){body{padding-top:72px}.hero{margin-top:-72px;padding-top:184px}.brand{flex-basis:122px;width:122px;height:54px}.brand img{width:210px}}

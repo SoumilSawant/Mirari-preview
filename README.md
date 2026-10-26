@@ -2,6 +2,34 @@
 
 A full-stack UK event booking application with the supplied logo, burgundy/ivory/gold design, cinematic artwork, interactive UK Night Atlas and responsive animations.
 
+## Static Ticket Tailor launch
+
+The production website for the current launch is a customer-only static build. It preserves Mirari's public design, Night Atlas, motion, Diwali Pahat event page and responsive layout, while Ticket Tailor is the sole system for ticket inventory, checkout, payment, confirmation email, ticket delivery, refunds and check-in. The complete server-backed application remains preserved on `codex/live-payment-readiness`; do not delete or rewrite that branch.
+
+Build the static site with:
+
+```powershell
+npm ci
+npm run build:static
+```
+
+Cloudflare Pages must publish only `dist`. The output contains no Express server, organiser interface, SQLite database, Stripe or Resend integration. It requires no environment variables, persistent disk or Render service. Content changes are made in the repository, verified with the same build and tests, and deployed by pushing the production branch.
+
+### Cloudflare Pages settings
+
+1. Sign in to the business-owned Cloudflare account and choose **Workers & Pages → Create → Pages → Connect to Git**.
+2. Connect the GitHub repository and grant access only to the Mirari repository where possible.
+3. Select production branch `codex/static-ticket-tailor-launch`.
+4. Set build command to `npm run build:static`.
+5. Set build output directory to `dist`.
+6. Leave environment variables empty. Do not enter Stripe, Resend, database, password or MFA secrets.
+7. Deploy and first verify the assigned `*.pages.dev` address at desktop and mobile widths. Do not submit a real order during visual verification.
+8. In the Pages project choose **Custom domains → Set up a domain**, enter `mirari.events`, and follow Cloudflare's displayed instructions.
+
+The domain remains registered and paid for at GoDaddy. An apex domain such as `mirari.events` may require changing the authoritative nameservers from GoDaddy to the nameservers supplied by Cloudflare. Before that change, copy and verify every existing DNS record in the new Cloudflare DNS zone, especially Resend DKIM/SPF records and any other email records. Missing records can break domain email verification. Do not delete records merely because they are unrelated to the website. Wait for Cloudflare to show the domain and HTTPS certificate as active before sharing it publicly.
+
+The static build publishes only `Diwali Pahat London 2026`. Every purchase call-to-action goes to the approved listing at `https://buytickets.at/mirarievents/2495970`. Ticket availability, prices, fees and customer order support remain authoritative in Ticket Tailor and are intentionally not duplicated on Mirari.
+
 ## Run locally
 
 Requires **Node.js 24+**, including its built-in SQLite module.
