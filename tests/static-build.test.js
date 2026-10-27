@@ -14,7 +14,7 @@ test('static launch build contains only customer files and the approved event',(
   assert.ok(files.includes('index.html'));
   assert.ok(files.includes('404.html'));
   assert.ok(files.includes('_headers'));
-  assert.ok(files.includes('_redirects'));
+  assert.ok(!files.includes('_redirects'));
   assert.equal(files.some(file=>/(^|\/)(server|admin)(\.|\/)|\.sqlite|\.env|backup|tests?\//i.test(file)),false,files.join('\n'));
   const customerFiles=['index.html','404.html','app.js','event-data.json','styles.css','launch.css'];
   const customerText=customerFiles.map(file=>readFileSync(path.join(output,file),'utf8')).join('\n');

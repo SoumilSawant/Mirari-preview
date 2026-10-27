@@ -2,8 +2,18 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "mirari-events-site",
   "compatibility_date": "2026-10-27",
+  "main": "./cloudflare-worker.mjs",
   "assets": {
     "directory": "./dist",
-    "not_found_handling": "single-page-application"
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": [
+      "/admin",
+      "/admin/*",
+      "/my-tickets",
+      "/my-tickets/*",
+      "/order/*",
+      "/checkout/*"
+    ]
   }
 }

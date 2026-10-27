@@ -23,7 +23,6 @@ if(event.externalBookingUrl!=='https://buytickets.at/mirarievents/2495970')throw
 if(event.startAt!=='2026-11-08T11:00:00.000Z'||event.endAt!=='2026-11-08T15:00:00.000Z')throw new Error('Unexpected event schedule.');
 writeFileSync(path.join(output,'event-data.json'),`${JSON.stringify([event],null,2)}\n`);
 
-writeFileSync(path.join(output,'_redirects'),'/event/* /index.html 200\n/events /index.html 200\n/admin /404.html 404\n/admin/* /404.html 404\n/my-tickets /404.html 404\n/order/* /404.html 404\n/checkout/* /404.html 404\n');
 writeFileSync(path.join(output,'_headers'),`/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  Permissions-Policy: camera=(), microphone=(), geolocation=()\n  Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests\n\n/assets/*\n  Cache-Control: public, max-age=604800\n`);
 writeFileSync(path.join(output,'robots.txt'),'User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /my-tickets\nDisallow: /order/\nSitemap: https://mirari.events/sitemap.xml\n');
 writeFileSync(path.join(output,'sitemap.xml'),'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://mirari.events/</loc></url><url><loc>https://mirari.events/events</loc></url><url><loc>https://mirari.events/event/diwali-pahat-london-2026</loc></url></urlset>\n');
