@@ -80,3 +80,31 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold);background:#230
 .brand{position:relative;display:block;flex:0 0 145px;width:145px;height:60px;margin:0;overflow:hidden}
 .brand img{position:absolute;display:block;width:240px;height:auto;max-width:none;left:50%;top:50%;transform:translate(-50%,-50%);clip-path:inset(43% 0 32%)}
 @media(max-width:760px){.brand{flex-basis:122px;width:122px;height:54px}.brand img{width:210px}}
+
+/* Shared glass surfaces retain an opaque fallback for browsers without backdrop-filter. */
+:root{--glass-fill:#35191ce8;--glass-edge:#d9b57655;--glass-light:#fff5df18;--glass-shadow:0 20px 48px #10040738}
+#header.scrolled,#nav.open{background:var(--glass-fill);border-color:var(--glass-edge);box-shadow:inset 0 1px var(--glass-light),var(--glass-shadow)}
+.filters,.booking-panel,.admin-stats>div,.admin-tabs,.mail-item,dialog{background:var(--glass-fill);border:1px solid var(--glass-edge);box-shadow:inset 0 1px var(--glass-light),var(--glass-shadow)}
+.booking-panel,.filters,.mail-item,dialog{border-radius:10px}
+.admin-tabs{padding:8px;border-radius:10px;width:fit-content;max-width:100%}
+.panel,.admin-row{border-color:#a47a595c;border-radius:10px;box-shadow:inset 0 1px #fff2d411,0 18px 42px #10040725}
+.admin-stats>div{border-radius:8px}
+.admin-list .panel,.admin-row,.mail-item{transition:border-color .22s ease,box-shadow .22s ease}
+.admin-list .panel:hover,.admin-row:hover,.mail-item:focus-within{border-color:#d9b57699;box-shadow:inset 0 1px #fff2d421,0 20px 48px #10040735}
+.field input,.field select,.field textarea{transition:border-color .2s ease,background-color .2s ease,box-shadow .2s ease}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold);background:#261014;box-shadow:0 0 0 3px #d9b57622}
+.button:active,.nav-ticket:active,.chip:active{transform:translateY(1px) scale(.985);box-shadow:none}
+.admin-tabs .button:focus-visible,.chip:focus-visible{outline-offset:2px}
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){#header.scrolled,#nav.open,.filters,.booking-panel,.admin-stats>div,.admin-tabs,.mail-item,dialog{background:#35191cc9;backdrop-filter:blur(16px) saturate(125%);-webkit-backdrop-filter:blur(16px) saturate(125%)}}
+@media(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
+  .hero{perspective:1100px}.hero-bg{transform:translateY(var(--hero-y,0px)) scale(1.045) translate3d(var(--hero-x,0px),var(--hero-pointer-y,0px),0);transition:transform .5s ease-out}
+  .event-card{transform-style:preserve-3d;will-change:transform}
+  .event-card.visible:hover{transform:perspective(900px) translateY(-5px) rotateX(var(--tilt-x,0deg)) rotateY(var(--tilt-y,0deg));box-shadow:0 23px 45px #09030555}
+  .event-card .event-image img{transition:transform .4s ease}.event-card:hover .event-image img{transform:scale(1.035)}
+  .event-card .event-card-bottom{transform:translateZ(10px)}
+  .map-marker .dot,.map-marker .halo{transition:transform .25s ease,opacity .25s ease}
+  .map-marker:hover .dot,.map-marker:focus-visible .dot{transform:scale(1.4)}
+}
+@media(max-width:760px){.admin-tabs{width:100%;overflow-x:auto;flex-wrap:nowrap}.admin-tabs .button{flex:none}.booking-panel{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
+@media(prefers-reduced-motion:reduce){.hero-bg,.event-card,.event-card .event-image img,.admin-row,.mail-item{will-change:auto!important;transform:none!important;transition:none!important}}
+@media print{#header,.booking-panel,.panel,.ticket,.mail-item,.admin-stats>div{background:white!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;transform:none!important}.ticket{color:#111!important}}

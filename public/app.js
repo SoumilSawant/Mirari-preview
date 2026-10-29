@@ -49,6 +49,28 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu();});
 window.addEventListener('popstate',()=>void route());
 let frame=false;
 window.addEventListener('scroll',()=>{if(frame)return;frame=true;requestAnimationFrame(()=>{$('#header').classList.toggle('scrolled',scrollY>20);if(!reduced.matches&&innerWidth>760)$('.hero-bg')?.style.setProperty('--hero-y',`${Math.min(scrollY*.12,65)}px`);frame=false;});},{passive:true});
+// Pointer depth uses one delegated handler, so rerendered event cards need no extra listeners.
+const finePointer=matchMedia('(hover: hover) and (pointer: fine)');
+document.addEventListener('pointermove',event=>{
+  if(reduced.matches||!finePointer.matches)return;
+  const card=event.target.closest('.event-card');
+  if(card){
+    const bounds=card.getBoundingClientRect();
+    card.style.setProperty('--tilt-x',`${((event.clientY-bounds.top)/bounds.height-.5)*-3}deg`);
+    card.style.setProperty('--tilt-y',`${((event.clientX-bounds.left)/bounds.width-.5)*3}deg`);
+  }else if(event.target.closest('.hero')){
+    const bounds=$('.hero').getBoundingClientRect(),x=(event.clientX-bounds.left)/bounds.width-.5,y=(event.clientY-bounds.top)/bounds.height-.5;
+    $('.hero-bg')?.style.setProperty('--hero-x',`${x*12}px`);
+    $('.hero-bg')?.style.setProperty('--hero-pointer-y',`${y*8}px`);
+  }
+},{passive:true});
+document.addEventListener('pointerout',event=>{
+  const card=event.target.closest('.event-card');
+  if(card&&!card.contains(event.relatedTarget)){card.style.removeProperty('--tilt-x');card.style.removeProperty('--tilt-y');}
+  if(event.target.closest('.hero')&&!event.relatedTarget?.closest?.('.hero')){
+    $('.hero-bg')?.style.removeProperty('--hero-x');$('.hero-bg')?.style.removeProperty('--hero-pointer-y');
+  }
+},{passive:true});
 $('#year').textContent=new Date().getFullYear();
 async function route(){
   cleanup();cleanup=()=>{};closeMenu();const version=++routeVersion;window.scrollTo({top:0,behavior:'instant'});
