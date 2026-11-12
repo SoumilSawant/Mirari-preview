@@ -39,17 +39,39 @@ try{
     assert.equal(await page.locator('text=Stripe Test Mode').count(),0);
     assert.equal(await page.locator('a[href="/my-tickets"]').count(),0);
     await page.screenshot({path:path.join(screenshots,`home-${viewport.width}.png`),fullPage:true});
+    // Real clock is after 8 November 2026: every booking path must be withdrawn.
+    assert.equal(await page.locator('a[href*="buytickets.at"]').count(),0);
+    assert.equal(await page.locator('#nav-ticket').isVisible(),false);
+    assert.match(await page.locator('.city-banner').innerText(),/No upcoming events/);
+    assert.match(await page.locator('.event-card').innerText(),/Event ended/);
     await page.goto(`${origin}/event/diwali-pahat-london-2026`,{waitUntil:'networkidle'});
     await page.getByRole('heading',{name:'Diwali Pahat London 2026'}).waitFor();
-    const booking=page.getByRole('link',{name:/Book tickets/}).last();
-    assert.equal(await booking.getAttribute('href'),'https://buytickets.at/mirarievents/2495970');
-    assert.equal(await booking.getAttribute('target'),null);
+    await page.getByRole('heading',{name:'This event has ended.'}).waitFor();
+    assert.equal(await page.getByRole('link',{name:/Book tickets/}).count(),0);
+    assert.equal(await page.locator('a[href*="buytickets.at"]').count(),0);
     assert.match(await page.locator('.facts').innerText(),/11:00–15:00 · GMT/);
+    assert.match(await page.locator('.facts').innerText(),/Sales closed/);
     assert.equal(await page.locator('.event-poster img').evaluate(image=>image.getBoundingClientRect().height>image.getBoundingClientRect().width),true);
-    await page.screenshot({path:path.join(screenshots,`event-${viewport.width}.png`),fullPage:true});
+    await page.screenshot({path:path.join(screenshots,`event-ended-${viewport.width}.png`),fullPage:true});
+    await page.goto(`${origin}/events`,{waitUntil:'networkidle'});
+    await page.getByRole('heading',{name:'No upcoming events right now.'}).waitFor();
+    await page.locator('select[name="when"]').selectOption('past');
+    assert.equal(await page.locator('.event-card').count(),1);
     assert.equal(requests.some(url=>url.includes('/api/')),false);
     assert.deepEqual(failures,[]);
     await page.close();
+
+    // Before the event ends, booking links point to the approved Ticket Tailor listing.
+    const before=await browser.newPage({viewport,reducedMotion:'reduce'});
+    await before.clock.setFixedTime(new Date('2026-11-01T12:00:00Z'));
+    await before.goto(`${origin}/event/diwali-pahat-london-2026`,{waitUntil:'networkidle'});
+    await before.getByRole('heading',{name:'Book securely through Ticket Tailor.'}).waitFor();
+    const booking=before.getByRole('link',{name:/Book tickets/}).last();
+    assert.equal(await booking.getAttribute('href'),'https://buytickets.at/mirarievents/2495970');
+    assert.equal(await booking.getAttribute('target'),null);
+    assert.equal(await before.locator('#nav-ticket').getAttribute('href'),'https://buytickets.at/mirarievents/2495970');
+    await before.screenshot({path:path.join(screenshots,`event-${viewport.width}.png`),fullPage:true});
+    await before.close();
   }
   const blocked=await browser.newPage();
   const response=await blocked.goto(`${origin}/admin`);
