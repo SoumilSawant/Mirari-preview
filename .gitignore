@@ -9,3 +9,6 @@ playwright-report/
 assets/uploads/
 output/backups/
 output/
+
+.taste-skill/
+shots/

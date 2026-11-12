@@ -31,9 +31,9 @@ try{
     const page=await browser.newPage({viewport,reducedMotion:'reduce'}),errors=[];
     page.on('pageerror',error=>errors.push(error.message));
     await page.goto(origin);await page.locator('.hero h1').waitFor();
-    assert.match(await page.locator('#demo-notice').textContent(),/STRIPE TEST MODE/);
-    assert.match(await page.locator('.hero h1').textContent(),/Experience culture.*Feel the connection/s);
-    assert.equal(await page.locator('.experience-card').count(),5);
+    assert.match(await page.locator('#demo-notice').textContent(),/Stripe test mode/);
+    assert.match(await page.locator('.hero h1').textContent(),/Indian music, dance and festivals in London/);
+    assert.equal(await page.locator('.mo-ph__ch').count(),4);
     await page.locator('.about-img').scrollIntoViewIfNeeded();
     await page.locator('.about-img').evaluate(img=>img.decode());
     await page.evaluate(()=>window.scrollTo(0,0));

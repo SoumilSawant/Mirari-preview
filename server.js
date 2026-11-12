@@ -310,10 +310,10 @@ setInterval(()=>{void reconcile().catch(()=>console.error('Payment reconciliatio
 setTimeout(()=>{void reconcile().catch(()=>console.error('Payment reconciliation worker failed'));},1000).unref();
 app.use('/assets/uploads',express.static(uploadsPath,{maxAge:'1d',dotfiles:'deny'}));
 app.use('/assets',express.static(path.join(root,'assets'),{maxAge:'1d',dotfiles:'deny'}));
-app.get('/styles.css',(_req,res)=>res.sendFile(path.join(root,'styles.css'),{dotfiles:'allow'}));
 app.get('/vendor/jsQR.js',(_req,res)=>res.sendFile(path.join(root,'node_modules/jsqr/dist/jsQR.js'),{dotfiles:'allow'}));
 app.use(express.static(path.join(root,'public'),{dotfiles:'deny'}));
 app.use('/api',(_req,res)=>res.status(404).json({error:'Endpoint not found.'}));
-app.get('/{*page}',(_req,res)=>res.sendFile(path.join(root,'index.html'),{dotfiles:'allow'}));
+// The homepage is a static document; every other route is rendered by public/app.js inside the app shell.
+app.get('/{*page}',(req,res)=>res.sendFile(path.join(root,req.path==='/'||req.path==='/index.html'?'index.html':'app.html'),{dotfiles:'allow'}));
 app.use((error,_req,res,_next)=>{const status=Number.isInteger(error.status)&&error.status>=400&&error.status<600&&error.status!==500?error.status:500;if(status===500)console.error('Request failed:',error.name);res.status(status).json({error:status===500?'The service could not complete this request. Please try again.':error.message});});
 app.listen(port,process.env.HOST||'127.0.0.1',()=>console.log(`Mirari: ${appUrl} · ${demo?'DEMO — no real payments/emails':'configured payments'}\nAdmin credentials: environment or .local-admin.txt (private local file)`));

@@ -1,30 +1,204 @@
 <!doctype html>
-<html lang="en-GB">
+<html lang="en-GB" data-type="service" data-radius="soft" data-buttons="solid" data-motion>
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#351215">
-  <meta name="description" content="Mirari brings people together through music, dance, art and cultural experiences in London. Explore upcoming events and creative gatherings.">
-  <title>Mirari · Where Culture Comes Alive</title>
-  <link rel="icon" href="/assets/mirari-logo-transparent.png">
-  <link rel="preload" as="image" href="/assets/hero.webp">
-  <link rel="stylesheet" href="/styles.css">
-  <script type="module" src="/app.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mirari: Indian music, dance and festival events in London</title>
+<meta name="description" content="Mirari runs concerts, dance evenings, art workshops and festival gatherings in London. Book online as a guest and receive QR tickets by email.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Mirari: Indian music, dance and festival events in London">
+<meta property="og:description" content="Concerts, dance evenings, art workshops and festival gatherings in London, with tickets sent by email.">
+<meta property="og:image" content="/assets/share.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/assets/mirari-logo-transparent-light.png">
+<meta name="theme-color" content="#f7efe3">
+<!-- <link rel="canonical" href="https://[the client's domain]/"> -->
+<meta name="site-kind" content="other">
+<meta name="page-type" content="service">
+<link rel="preload" as="image" href="/assets/img/photo-f178061677-1200.webp">
+<link rel="stylesheet" href="/kit/fonts/fonts.css">
+<link rel="stylesheet" href="/kit/system.css">
+<link rel="stylesheet" href="/kit/ui/cards.css">
+<link rel="stylesheet" href="/kit/motion/motion.css">
+<link rel="stylesheet" href="/kit/layout/layout.css">
+<link rel="stylesheet" href="/theme.css">
+<link rel="stylesheet" href="/home.css">
+<script src="/enter.js"></script>
+<link rel="modulepreload" href="/kit/moments/moments.js">
+<link rel="modulepreload" href="/kit/moments/lib.js">
+<link rel="modulepreload" href="/kit/moments/photo-chapters/moment.js">
+<link rel="modulepreload" href="/kit/moments/word-highlight/moment.js">
 </head>
 <body>
-  <a class="skip" href="#main">Skip to content</a>
-  <header id="header">
-    <a class="brand" href="/" aria-label="Mirari home"><img src="/assets/mirari-logo-transparent.png" alt="Mirari" width="140" height="80"></a>
-    <nav id="nav" aria-label="Main navigation"><a href="/events">Events</a><a href="/#atlas">Explore</a><a href="/#about">About</a><a class="nav-ticket" href="/my-tickets"><span aria-hidden="true">◇</span> My tickets</a></nav>
-    <button class="menu-button" id="menu-button" aria-label="Open navigation" aria-expanded="false" aria-controls="nav"><span></span><span></span></button>
-  </header>
-  <div id="demo-notice" hidden>DEMO EXPERIENCE <span>Explore sample events. No real payments or admission.</span></div>
-  <main id="main" tabindex="-1"><div class="loading">Preparing your next moment…</div></main>
-  <footer>
-    <div class="footer-top"><div><a class="wordmark" href="/">MIRARI</a><p>Where Culture Comes Alive.<br>Cultural experiences in London.</p></div><div><span class="event-meta">DISCOVER</span><a href="/events">Upcoming events</a><a href="/#atlas">The Night Atlas</a><a href="/my-tickets">My tickets</a></div><div><span class="event-meta">HERE TO HELP</span><a href="/policy/contact">Contact Mirari</a><a href="/policy/accessibility">Accessibility</a><a href="/policy/refunds">Refunds & changes</a></div></div>
-    <p>Map data: Natural Earth</p><div class="footer-bottom"><span>© <span id="year"></span> Mirari</span><div><a href="/policy/privacy">Privacy</a><a href="/policy/terms">Terms</a><a href="/policy/cookies">Cookies</a><a href="/admin">Organiser sign-in</a></div></div>
-  </footer>
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <dialog id="confirm-dialog"><h2 id="confirm-title">Confirm action</h2><p id="confirm-copy"></p><div class="actions"><button class="button ghost" id="confirm-no">Go back</button><button class="button" id="confirm-yes">Confirm</button></div></dialog>
-  <noscript><p class="notice">Please enable JavaScript to browse events and book tickets.</p></noscript>
+<!-- type: service (site-kind other)
+     deal: hero split, nav nav-centre, close close-photo, footer footer-dark, rhythm surface-pairs, buttons solid, mark the client's own logo
+     palette: the client's own ivory, burgundy and near-black through start.mjs brand; type instrument-serif (the dealt red-hat grotesk clashes with the serif logo)
+     moments: photo-chapters in #experiences, word-highlight in #belief -->
+<header class="nav nav--centre">
+  <div class="wrap nav__bar">
+    <a class="skip-link" href="#top">Skip to content</a>
+    <a class="nav__logo brand" href="/" aria-label="Mirari home">Mirari</a>
+    <nav class="nav__links" id="nav" aria-label="Main">
+      <div class="nav__item"><a class="nav__link" href="/events">Events</a></div>
+      <div class="nav__item"><a class="nav__link" href="#experiences">Experiences</a></div>
+      <div class="nav__item"><a class="nav__link" href="#atlas">Cities</a></div>
+      <div class="nav__item"><a class="nav__link" href="#about">About</a></div>
+      <div class="nav__item"><a class="nav__link" href="#questions">Questions</a></div>
+    </nav>
+    <div class="nav__actions">
+      <a class="nav__link" href="/my-tickets">My tickets</a>
+      <a class="btn btn--primary" href="/events">Book tickets</a>
+    </div>
+    <button class="nav__toggle" id="menu-button" type="button" aria-expanded="false" aria-label="Menu">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h14M2 13h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="top" data-view="home">
+  <section class="hero hero--split" data-enter aria-labelledby="hero-h">
+    <div class="wrap"><div class="hero-text grid hero__grid">
+      <div class="hero__text span-5">
+        <p class="hero-notice" id="demo-notice" hidden></p>
+        <h1 id="hero-h">Indian music, dance and festivals in London</h1>
+        <p class="hero__lead">Mirari runs concerts, dance evenings, art workshops and festival mornings across London. Choose an event, pay online and your QR tickets arrive by email.</p>
+        <div class="btn-row"><a class="btn btn--primary" href="/events">Book tickets<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a><a class="btn btn--secondary" href="#about">Read about Mirari</a></div>
+        <dl class="hero-facts">
+          <div><dt>Booking</dt><dd>As a guest, no account</dd></div>
+          <div><dt>Prices</dt><dd>Every fee included</dd></div>
+          <div><dt>Each order</dt><dd>Up to 8 tickets</dd></div>
+        </dl>
+      </div>
+      <div class="hero__media span-6 start-7">
+        <img src="/assets/img/photo-f178061677-1200.webp" srcset="/assets/img/photo-f178061677-800.webp 800w, /assets/img/photo-f178061677-1200.webp 1200w" sizes="(max-width: 639px) 100vw, 1200px" width="1200" height="800" alt="A Kathak dancer mid-turn in a green skirt on a riverside terrace at sunrise" style="--ly-pos: 66% 50%" fetchpriority="high" data-source="shoot" data-subject="dancer">
+        <div class="ly-float" id="next-event" hidden></div>
+      </div>
+    </div></div>
+  </section>
+
+  <section class="section" id="events" aria-labelledby="events-h">
+    <div class="wrap">
+      <div class="section-head--split section-head">
+        <div><h2 id="events-h">Upcoming events</h2><p>The price on each event includes every booking fee.</p></div>
+        <a class="link m-link" href="/events">See all events<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a>
+      </div>
+      <div class="grid event-grid" id="home-events" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="section" id="experiences" data-moment="photo-chapters" aria-labelledby="experiences-h">
+    <div class="wrap mo-ph">
+      <div class="mo-ph__head"><h2 id="experiences-h">Four kinds of cultural event</h2><p>Music, dance, art and festivals, all in London.</p></div>
+      <ol class="mo-ph__list">
+        <li class="mo-ph__ch">
+          <figure class="mo-ph__pic"><img src="/assets/img/photo-f106775015-1600.webp" alt="Three musicians seated on a stage edged with marigold garlands, playing sarod and tabla" width="1600" height="1200" loading="lazy" decoding="async" data-source="shoot" data-subject="concert"></figure>
+          <h3>Music and live performance</h3>
+          <p>Classical mornings and fusion concerts, with music that grandparents and teenagers can sit through together.</p>
+        </li>
+        <li class="mo-ph__ch">
+          <figure class="mo-ph__pic"><img src="/assets/img/photo-f186316691-2400.webp" alt="A line of Kathak dancers in pale skirts performing on an open-air stage at night" width="2400" height="1003" loading="lazy" decoding="async" data-source="shoot" data-subject="dance"></figure>
+          <h3>Dance and movement</h3>
+          <p>Lavani, folk dance, Bollywood and contemporary fusion on stage, and workshops where you join in.</p>
+        </li>
+        <li class="mo-ph__ch">
+          <figure class="mo-ph__pic"><img src="/assets/img/photo-f151601638-1600.webp" alt="A large rangoli of coloured powder laid out in rings of red, blue and yellow" width="1600" height="1200" loading="lazy" decoding="async" data-source="shoot" data-subject="craft"></figure>
+          <h3>Art and creative workshops</h3>
+          <p>Hands-on sessions in Warli painting, Madhubani art, block printing and other traditional crafts.</p>
+        </li>
+        <li class="mo-ph__ch">
+          <figure class="mo-ph__pic"><img src="/assets/img/photo-f29961576-1600.webp" alt="Clay oil lamps burning in a circle of marigold petals on a patterned floor" width="1600" height="1067" loading="lazy" decoding="async" data-source="shoot" data-subject="festival"></figure>
+          <h3>Festivals and celebrations</h3>
+          <p>Diwali and other traditional Indian festivals, held as gatherings that anyone can walk into.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section" id="questions" aria-labelledby="questions-h">
+    <div class="wrap">
+      <div class="grid grid--top">
+        <div class="span-5"><h2 id="questions-h">Booking questions</h2></div>
+        <div class="faq span-6 start-7" id="home-faq">
+          <div class="faq__item"><h3>Do I need an account to book?</h3><p>No. You book as a guest with your name and email, and you can ask for a private link to your tickets at any time.</p></div>
+          <div class="faq__item"><h3>How will I receive my tickets?</h3><p id="faq-delivery">Once payment is confirmed, your QR tickets appear on the confirmation page and a private link is sent to your email.</p></div>
+          <div class="faq__item"><h3>Are booking fees included?</h3><p>Yes. The price shown on each ticket includes every mandatory fee, and you see the total before you pay.</p></div>
+          <div class="faq__item"><h3>What if I lose the email?</h3><p>Open My tickets and enter your booking email. We send a new private link, which works once and expires after 15 minutes.</p></div>
+          <div class="faq__item"><h3>What if an event changes?</h3><p>Updates appear in My tickets, and the <a class="link" href="/policy/refunds">refunds and changes page</a> sets out what happens next.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="section ground-surface" id="atlas" aria-labelledby="atlas-h">
+    <div class="wrap">
+      <div class="section-head"><h2 id="atlas-h">Events by city</h2></div>
+      <div class="grid grid--top fill">
+        <div class="span-5 atlas-side">
+          <div class="atlas-controls" role="group" aria-label="Choose an event city"></div>
+          <div class="atlas-panel" id="atlas-panel" aria-live="polite"></div>
+        </div>
+        <div class="span-6 start-7 map-wrap" id="map-wrap"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section statement" id="belief" data-moment="word-highlight" aria-label="Our philosophy">
+    <div class="wrap">
+      <p class="t-label">Our philosophy</p>
+      <p class="mo-wh__text">Tradition inspires us. Creativity connects us. <strong>Community</strong> defines us. Mirari brings heritage and modern expression together in events that feel authentic, inclusive and memorable.</p>
+    </div>
+  </section>
+
+  <section class="section" id="about" aria-labelledby="about-h">
+    <div class="wrap">
+      <div class="grid grid--top fill">
+        <div class="span-5 stack-5 about-copy">
+          <h2 id="about-h">About Mirari</h2>
+          <p class="t-lead">Mirari is a London-based cultural experiences company. We bring people together through music, dance, art and community celebrations.</p>
+          <p>Our events run from small creative workshops to full festival days. Each one sets a tradition beside the way people in London practise it now, and each is a room where you can meet others who care about it.</p>
+          <p><a class="link m-link" href="/events">See upcoming events<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a></p>
+        </div>
+        <a class="frame frame--photo frame--fill span-6 start-7 m-zoom about-photo" href="/events" aria-label="See upcoming events">
+          <img class="frame__img about-img" src="/assets/img/photo-f126512772-1200.webp" width="1200" height="674" alt="A dancer's bare feet on a wooden stage, ankles wrapped in rows of brass bells" loading="lazy" decoding="async" data-source="shoot" data-subject="dance detail">
+        </a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer closing footer--dark ground-inverse" id="contact" aria-labelledby="close-h">
+  <div class="wrap">
+    <div class="closing__cta close--photo">
+      <div class="section-head--split">
+        <div><h2 id="close-h">Book tickets for a Mirari event</h2><p class="t-lead">Book as a guest and your QR tickets arrive by email.</p></div>
+        <a class="btn btn--primary" href="/events">Book tickets<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a>
+      </div>
+      <div class="close__media"><img src="/assets/img/photo-f29961354-1600.webp" alt="Clay oil lamps burning on a brass tray in the dark" width="1600" height="1067" loading="lazy" decoding="async" data-source="shoot" data-subject="festival detail"></div>
+    </div>
+    <div class="closing__links">
+      <div class="grid">
+        <div class="span-4 stack-4">
+          <a class="footer__brand" href="/" aria-label="Mirari home"><img src="/assets/mirari-logo-footer.webp" alt="Mirari" width="364" height="214" loading="lazy"></a>
+          <p class="footer__lede">Cultural events in London: music, dance, art and festivals.</p>
+        </div>
+        <div class="span-2 start-7 footer__col"><h3>Events</h3><ul><li><a href="/events">Upcoming events</a></li><li><a href="#atlas">Events by city</a></li><li><a href="/my-tickets">My tickets</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Mirari</h3><ul><li><a href="#about">About</a></li><li><a href="#experiences">Experiences</a></li><li><a href="#questions">Questions</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Help</h3><ul><li><a href="/policy/contact">Contact Mirari</a></li><li><a href="/policy/accessibility">Accessibility</a></li><li><a href="/policy/refunds">Refunds and changes</a></li></ul></div>
+      </div>
+      <div class="footer__legal">
+        <span class="legal-links"><span>&copy; <span id="year">2026</span> Mirari</span><a href="/policy/privacy">Privacy</a><a href="/policy/terms">Terms</a><a href="/policy/cookies">Cookies</a><a href="/admin">Organiser sign-in</a></span>
+        <div class="socials"></div>
+        <a class="credits" href="/credits.html">Photographs via Wikimedia Commons, map data from Natural Earth</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<noscript><p class="wrap">Please enable JavaScript to browse events and book tickets.</p></noscript>
+<script type="module" src="/kit/system.js"></script>
+<script type="module" src="/kit/motion/motion.js"></script>
+<script type="module" src="/kit/layout/layout.js"></script>
+<script type="module" src="/app.js"></script>
 </body>
 </html>

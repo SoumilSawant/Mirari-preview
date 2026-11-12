@@ -23,8 +23,8 @@ try{
     const page=await browser.newPage({viewport,reducedMotion:'reduce'});const errors=[];page.on('pageerror',error=>errors.push(error.message));
     await page.goto(origin);await page.locator('.hero h1').waitFor();
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),true,`Home overflows at ${viewport.width}`);
-    assert.equal(await page.locator('.atlas-intro').evaluate(el=>getComputedStyle(el).opacity),'1',`Reduced-motion content hidden at ${viewport.width}`);
-    const motionPage=await browser.newPage({viewport});await motionPage.goto(origin);await motionPage.locator('.event-card').first().scrollIntoViewIfNeeded();await motionPage.locator('.event-card.visible').first().waitFor();await motionPage.close();
+    assert.equal(await page.locator('.hero h1').evaluate(el=>getComputedStyle(el).opacity),'1',`Reduced-motion content hidden at ${viewport.width}`);
+    const motionPage=await browser.newPage({viewport});await motionPage.goto(origin);await motionPage.locator('.event-card').first().scrollIntoViewIfNeeded();assert.equal(await motionPage.locator('.event-card').first().evaluate(el=>getComputedStyle(el).opacity),'1','Event tiles must be visible without a scroll reveal');await motionPage.close();
     if(viewport.width<760){await page.locator('#menu-button').focus();await page.keyboard.press('Enter');assert.equal(await page.locator('#menu-button').getAttribute('aria-expanded'),'true');await page.keyboard.press('Escape');assert.equal(await page.locator('#menu-button').getAttribute('aria-expanded'),'false');}
     await page.locator('[data-city="Manchester"]').first().click();await page.locator('#atlas-panel').getByText('Manchester').first().waitFor();
     await page.goto(`${origin}/event/${events[0].id}`);await page.locator('#booking-form').waitFor();
