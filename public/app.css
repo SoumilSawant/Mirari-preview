@@ -17,13 +17,13 @@
 .event-meta { color: var(--muted); font-size: var(--t-label); font-weight: 500; }
 .help-text { color: var(--muted); font-size: var(--t-small); }
 .actions { display: flex; flex-wrap: wrap; gap: var(--s-3); align-items: center; }
-.form-error { color: #a3261b; font-size: var(--t-small); font-weight: 500; }
+.form-error { color: var(--danger-ink); font-size: var(--t-small); font-weight: 500; }
 .form-error:empty { display: none; }
-.btn--danger { color: #a3261b; border-color: color-mix(in oklab, #a3261b 45%, transparent); }
+.btn--danger { color: var(--danger-ink); border-color: color-mix(in oklab, var(--danger-ink) 55%, transparent); }
 .btn[disabled], .btn[aria-busy="true"] { opacity: .55; cursor: not-allowed; }
 
 .notice { margin-bottom: var(--s-5); padding: var(--s-3) var(--s-4); border-radius: var(--r-md); background: var(--p-surface); font-size: var(--t-small); font-weight: 500; }
-.notice.error { background: color-mix(in oklab, #a3261b 10%, var(--p-bg)); color: #7c1d14; }
+.notice.error { background: color-mix(in oklab, #a3261b 28%, var(--p-bg)); color: var(--danger-ink); }
 
 /* A plain surface box: the booking panel, order actions, the ticket finder. */
 .box { padding: var(--s-6); border-radius: var(--r-lg); background: var(--p-surface); display: grid; gap: var(--s-4); align-content: start; }
@@ -71,15 +71,20 @@ form { display: grid; gap: var(--s-4); }
 
 /* Orders and tickets */
 .order-summary, .split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5); align-items: start; margin-bottom: var(--s-7); }
-.order-status { justify-self: start; padding: 2px 10px; border-radius: 999px; background: var(--p-bg); font-size: var(--t-label); font-weight: 500; text-transform: capitalize; }
+.order-status { justify-self: start; padding: 2px 10px; border-radius: 999px; background: color-mix(in oklab, var(--ink) 14%, transparent); font-size: var(--t-label); font-weight: 500; text-transform: capitalize; }
 .order-status[data-status="paid"] { background: #dcebd6; color: #1f4a1c; }
-.order-status:is([data-status="refunded"], [data-status="expired"], [data-status="cancelled"], [data-status="disputed"], [data-status="payment_review"]) { background: color-mix(in oklab, #a3261b 12%, var(--p-bg)); color: #7c1d14; }
+.order-status:is([data-status="refunded"], [data-status="expired"], [data-status="cancelled"], [data-status="disputed"], [data-status="payment_review"]) { background: color-mix(in oklab, #a3261b 28%, var(--p-bg)); color: var(--danger-ink); }
 .ticket-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: var(--s-5); }
-.ticket { display: grid; grid-template-columns: 1fr auto; gap: var(--s-4) var(--s-5); padding: var(--s-6); border: 1px solid var(--line); border-radius: var(--r-lg); background: #fffaf2; }
+/* tickets stay ivory with a gold edge, as in the original theme */
+.ticket { display: grid; grid-template-columns: 1fr auto; gap: var(--s-4) var(--s-5); padding: var(--s-6); border-radius: var(--r-lg); border-left: 5px solid var(--gold); background: #f4e8d5; color: #331519; }
+.ticket .tag { color: #7a1f2b; }
 .ticket h3 { font: var(--display-weight) var(--t-h3)/1.15 var(--font-display); }
-.ticket small { color: var(--muted); font-size: var(--t-small); }
+.ticket small { color: #684e42; font-size: var(--t-small); }
+.ticket-code, .ticket-code-block strong { color: #331519; }
+.ticket .copy-code { color: #331519; border-color: #a58a68; }
+.ticket .copy-feedback { color: #684e42; }
 .ticket img { width: 145px; height: 145px; border-radius: var(--r-sm); background: #fff; }
-.ticket-code-block { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); padding-top: var(--s-4); border-top: 1px dashed color-mix(in oklab, var(--ink) 30%, transparent); font-size: var(--t-small); }
+.ticket-code-block { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); padding-top: var(--s-4); border-top: 1px dashed #a58a68; font-size: var(--t-small); }
 .ticket-code { font: 500 13px/1.4 ui-monospace, Consolas, monospace; overflow-wrap: anywhere; }
 .copy-code { height: 32px; padding: 0 var(--s-3); border: 1px solid color-mix(in oklab, var(--ink) 28%, transparent); border-radius: var(--r-sm); background: transparent; color: var(--ink); font: 500 13px var(--font-text); cursor: pointer; }
 .copy-code:hover { border-color: var(--ink); }
@@ -117,7 +122,7 @@ a.admin-row:hover h3 { text-decoration: underline; text-underline-offset: 4px; }
 .scanner-video { width: 100%; max-width: 480px; border-radius: var(--r-lg); background: var(--ink); }
 .scan-result { padding: var(--s-4); border-radius: var(--r-md); background: #dcebd6; color: #1f4a1c; font-weight: 500; }
 .scan-result:empty { display: none; }
-.scan-result.error { background: color-mix(in oklab, #a3261b 12%, var(--p-bg)); color: #7c1d14; }
+.scan-result.error { background: color-mix(in oklab, #a3261b 28%, var(--p-bg)); color: var(--danger-ink); }
 code { font: 13px/1.4 ui-monospace, Consolas, monospace; overflow-wrap: anywhere; }
 summary { cursor: pointer; font-weight: 500; }
 
