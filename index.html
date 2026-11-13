@@ -27,13 +27,12 @@
 <link rel="modulepreload" href="/kit/moments/moments.js">
 <link rel="modulepreload" href="/kit/moments/lib.js">
 <link rel="modulepreload" href="/kit/moments/photo-chapters/moment.js">
-<link rel="modulepreload" href="/kit/moments/word-highlight/moment.js">
 </head>
 <body>
 <!-- type: service (site-kind other)
      deal: hero split, nav nav-centre, close close-photo, footer footer-dark, rhythm surface-pairs, buttons solid, mark the client's own logo
      palette: the original Mirari theme (deep burgundy, wine panels, ivory text, gold), kept at the client's request; Georgia headlines, Instrument Sans text
-     moments: photo-chapters in #experiences, word-highlight in #belief -->
+     moments: photo-chapters in #experiences; the #belief statement uses the scroll reveal (public/scroll-reveal.js, a port of React Bits ScrollReveal) -->
 <header class="nav nav--centre">
   <div class="wrap nav__bar">
     <a class="skip-link" href="#top">Skip to content</a>
@@ -145,10 +144,10 @@
     </div>
   </section>
 
-  <section class="section statement ground-gold" id="belief" data-moment="word-highlight" aria-label="Our philosophy">
+  <section class="section statement ground-gold" id="belief" aria-label="Our philosophy">
     <div class="wrap">
       <p class="t-label">Our philosophy</p>
-      <p class="mo-wh__text">Tradition inspires us. Creativity connects us. <strong>Community</strong> defines us. Mirari brings heritage and modern expression together in events that feel authentic, inclusive and memorable.</p>
+      <p class="scroll-reveal" data-scroll-reveal data-mode="scrub" data-split-by="words" data-effect="fade" data-stagger="0.05" data-base-opacity="0.1" data-base-rotation="3" data-blur-strength="4">Tradition inspires us. Creativity connects us. <strong>Community</strong> defines us. Mirari brings heritage and modern expression together in events that feel authentic, inclusive and memorable.</p>
     </div>
   </section>
 
@@ -204,5 +203,6 @@
 <script type="module" src="/kit/motion/motion.js"></script>
 <script type="module" src="/kit/layout/layout.js"></script>
 <script type="module" src="/app.js"></script>
+<script type="module" src="/scroll-reveal.js"></script>
 </body>
 </html>

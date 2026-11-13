@@ -111,3 +111,13 @@
   .callouts__close { width: 44px; height: 44px; }
   .callout__head { min-height: 52px; }
 }
+
+/* Scroll reveal (public/scroll-reveal.js): the statement in the display face, each word clearing as the page scrolls.
+   Without script, or with reduced motion, it is plain text. */
+#belief { overflow-x: clip; }   /* the tilted block must never make the page scroll sideways */
+.scroll-reveal { margin: var(--s-7) 0 0; max-width: 1100px; font-family: var(--font-display); font-weight: var(--display-weight); font-size: var(--t-h1); line-height: 1.12; letter-spacing: var(--display-tracking); text-wrap: pretty; }
+.scroll-reveal strong { font-weight: inherit; color: var(--accent); }
+.scroll-reveal-word, .scroll-reveal-piece { display: inline-block; }
+/* a plain fade needs no transform, so its words stay ordinary inline text */
+.scroll-reveal.is-plain .scroll-reveal-word, .scroll-reveal.is-plain .scroll-reveal-piece { display: inline; }
+@media (max-width: 639px) { .scroll-reveal { margin-top: var(--s-3); } }
