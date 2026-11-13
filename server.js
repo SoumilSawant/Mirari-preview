@@ -311,6 +311,7 @@ setTimeout(()=>{void reconcile().catch(()=>console.error('Payment reconciliation
 app.use('/assets/uploads',express.static(uploadsPath,{maxAge:'1d',dotfiles:'deny'}));
 app.use('/assets',express.static(path.join(root,'assets'),{maxAge:'1d',dotfiles:'deny'}));
 app.get('/vendor/jsQR.js',(_req,res)=>res.sendFile(path.join(root,'node_modules/jsqr/dist/jsQR.js'),{dotfiles:'allow'}));
+app.get('/vendor/cobe.js',(_req,res)=>res.sendFile(path.join(root,'node_modules/cobe/dist/index.esm.js'),{dotfiles:'allow'}));
 app.use(express.static(path.join(root,'public'),{dotfiles:'deny'}));
 app.use('/api',(_req,res)=>res.status(404).json({error:'Endpoint not found.'}));
 // The homepage is a static document; every other route is rendered by public/app.js inside the app shell.

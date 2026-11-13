@@ -128,15 +128,16 @@
       </div>
     </div>
   </section>
-  <section class="section ground-surface" id="atlas" aria-labelledby="atlas-h">
+  <section class="section ground-surface" id="atlas" style="--h: 1; --hm: 2" aria-labelledby="atlas-h">
     <div class="wrap">
-      <div class="section-head"><h2 id="atlas-h">Events by city</h2></div>
       <div class="grid grid--top fill">
         <div class="span-5 atlas-side">
+          <h2 id="atlas-h">Events by city</h2>
+          <p class="t-lead atlas-hint" id="atlas-hint">Choose a city, or press a pin on the globe, to see its events.</p>
           <div class="atlas-controls" role="group" aria-label="Choose an event city"></div>
           <div class="atlas-panel" id="atlas-panel" aria-live="polite"></div>
         </div>
-        <div class="span-6 start-7 map-wrap" id="map-wrap"></div>
+        <div class="span-6 start-7 globe-wrap" id="globe-wrap" data-visual></div>
       </div>
     </div>
   </section>
@@ -188,7 +189,7 @@
       <div class="footer__legal">
         <span class="legal-links"><span>&copy; <span id="year">2026</span> Mirari</span><a href="/policy/privacy">Privacy</a><a href="/policy/terms">Terms</a><a href="/policy/cookies">Cookies</a><a href="/admin">Organiser sign-in</a></span>
         <div class="socials"></div>
-        <a class="credits" href="/credits.html">Photographs via Wikimedia Commons, map data from Natural Earth</a>
+        <a class="credits" href="/credits.html">Photographs via Wikimedia Commons, globe by COBE</a>
       </div>
     </div>
   </div>

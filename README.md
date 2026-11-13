@@ -157,6 +157,7 @@ npm test
 node tests/ui.mjs
 node tests/mode-ui.mjs
 node tests/content-ui.mjs
+node tests/globe-ui.mjs
 ```
 
 Tests cover expiry, provider-backed holds, concurrent last-ticket booking, capacity/sales limits, payment binding, out-of-order and duplicate events, refunds, disputes, restart durability, migration and backup restoration, cancellation, invalid/duplicate/refunded admission and an isolated HTTP customer/admin flow. Mode-switch tests cover historical demo events, orders, mail and admission after a restart. The two browser scripts check desktop and mobile customer/admin pages in demo and Stripe test modes. HTTP tests include signed mock provider events, QR generation, one-use recovery, event creation and refunds; they make no real charges. Run a separate end-to-end test with real Stripe test-mode credentials and a configured webhook endpoint before any launch, including 3DS, async payment failure, refund success/failure and dispute events. Confirm the Resend verified sender delivers to a real test inbox. Demo mode never calls Stripe for a charge or sends email.
@@ -171,7 +172,8 @@ The HTTP test starts a loopback server. Restricted sandboxes must allow localhos
 - `public/app.js`, `public/admin.js`, `styles.css`: responsive interface.
 - `assets/mirari-logo-transparent.png`: supplied logo, preserved.
 - `assets/*.webp`: generated illustrative concert, jazz, electronic and classical artwork; not confirmed Mirari event photography.
-- `public/map-data.json`: local UK/Ireland outlines from public-domain [Natural Earth](https://www.naturalearthdata.com/about/terms-of-use/).
+- `public/globe.js`: the homepage globe (plain JavaScript on [COBE](https://github.com/shuding/cobe), served from `/vendor/cobe.js`). One pin per event city shows its name; the selected city lists its events as links to their event pages. It needs WebGL and CSS anchor positioning, and falls back to the city chips and list without them.
+- `public/map-data.json`: local UK/Ireland outlines from public-domain [Natural Earth](https://www.naturalearthdata.com/about/terms-of-use/); no longer used by the homepage.
 - `scripts/prepare-assets.mjs`: development helper referencing original local generated files. Prepared assets are included; running it is unnecessary.
 - `.reference/original/`: retained original prototype.
 

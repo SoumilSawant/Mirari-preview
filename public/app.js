@@ -73,17 +73,21 @@ async function home(){
   const cities=[...new Set(future.map(e=>e.city))];
   if(!cities.length){$('#atlas').hidden=true;document.querySelectorAll('a[href$="#atlas"]').forEach(a=>(a.closest('.nav__item,li')||a).hidden=true);return;}
   $('.atlas-controls').innerHTML=`<button class="chip active" type="button" data-city="all" aria-pressed="true">All cities</button>${cities.map(c=>`<button class="chip" type="button" data-city="${esc(c)}" aria-pressed="false">${esc(c)}</button>`).join('')}`;
-  let mapData;try{mapData=await fetch('/map-data.json').then(r=>r.json());}catch{mapData=[];}
-  const project=(lat,lng)=>[(lng+9)*40,(61-lat)*52];
-  const locations=cities.map(city=>future.find(e=>e.city===city));
-  $('#map-wrap').innerHTML=mapData.length?`<svg class="map-svg" viewBox="0 30 480 600" role="group" aria-label="Map of event cities. The city buttons do the same."><g class="map-camera">${mapData.map(p=>`<path class="${p.name==='United Kingdom'?'map-land':'map-context'}" d="${p.d}"/>`).join('')}${locations.map(e=>{const[x,y]=project(e.lat,e.lng);return`<g class="map-marker" data-city="${esc(e.city)}" role="button" tabindex="0" aria-label="Show ${esc(e.city)} events" aria-pressed="false" transform="translate(${x},${y})"><circle class="halo" r="15"/><circle class="dot" r="5"/><text x="14" y="5">${esc(e.city)}</text></g>`;}).join('')}</g></svg>`:'';
+  let globe=null;
   function select(city){
-    document.querySelectorAll('[data-city]').forEach(b=>{const active=b.dataset.city===city;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});
+    document.querySelectorAll('.chip[data-city]').forEach(b=>{const active=b.dataset.city===city;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});
     const selected=future.filter(e=>city==='all'||e.city===city),title=city==='all'?'All cities':city;
     $('#atlas-panel').innerHTML=`<div class="panel-enter"><p class="atlas-title">${esc(title)}</p><p class="atlas-count">${selected.length} upcoming ${selected.length===1?'event':'events'}</p><ul class="rows">${selected.slice(0,3).map(e=>`<li><a class="rows__name" href="${link(e.id)}">${esc(e.title)}</a><p>${date(e.startAt)} · ${esc(e.venue)}${e.demo?' · Demo event':''}</p><span class="rows__value">${status(e)==='Tickets available'?`From ${price(e)}`:esc(status(e))}</span></li>`).join('')}</ul>${selected.length>3?`<a class="link atlas-more" href="/events${city==='all'?'':`?city=${encodeURIComponent(city)}`}">See all ${selected.length} events</a>`:''}</div>`;
-    const camera=$('.map-camera');if(camera){const e=locations.find(e=>e.city===city);if(!e||reduced.matches)camera.style.transform='none';else{const[x,y]=project(e.lat,e.lng);camera.style.transform=`translate(${(240-x)*.1}px,${(320-y)*.08}px) scale(1.06)`;}}
+    globe?.focus(city);
   }
-  document.querySelectorAll('[data-city]').forEach(b=>{b.addEventListener('click',()=>select(b.dataset.city));if(b.tagName.toLowerCase()==='g')b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select(b.dataset.city);}});});
+  document.querySelectorAll('.chip[data-city]').forEach(b=>b.addEventListener('click',()=>select(b.dataset.city)));
+  // The globe is progressive: without WebGL or CSS anchor positioning the chips and the list below carry the section.
+  try{
+    const{globeSupported,mountGlobe}=await import('/globe.js');
+    if(!globeSupported())throw new Error('no globe');
+    const places=cities.map(city=>{const list=future.filter(e=>e.city===city);return{name:city,lat:list[0].lat,lng:list[0].lng,events:list.map(e=>({href:link(e.id),title:e.title,meta:`${date(e.startAt)} · ${status(e)==='Tickets available'?'From '+price(e):status(e)}`}))};});
+    globe=mountGlobe($('#globe-wrap'),places,{onSelect:select,reduced:reduced.matches});
+  }catch{$('#globe-wrap').hidden=true;$('#atlas .grid').classList.add('no-globe');$('#atlas-hint').textContent='Choose a city to see its events.';}
   select('all');
 }
 function listing(){
