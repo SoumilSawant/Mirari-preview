@@ -6,43 +6,67 @@
 .chip:hover { border-color: var(--ink); }
 .chip.active { background: var(--ink); border-color: var(--ink); color: var(--p-bg); }
 .atlas-panel .atlas-title { font: 500 var(--t-lead)/1.3 var(--font-text); }
-.atlas-panel .atlas-count { color: var(--muted); margin: var(--s-1) 0 var(--s-5); }
+.atlas-panel .atlas-title { margin-bottom: var(--s-4); }
+.atlas-panel .atlas-count { color: var(--muted); font-weight: 400; }
 .atlas-panel .rows a { color: inherit; text-decoration: none; }
 .atlas-panel .rows a:hover .rows__name, .atlas-panel .rows a:focus-visible .rows__name { text-decoration: underline; text-underline-offset: 4px; }
 .atlas-panel .rows li > p { color: var(--muted); }
-.atlas-panel .atlas-more { display: inline-flex; margin-top: var(--s-5); }
+.atlas-panel .rows > li { padding-block: var(--s-2); }
+.atlas-panel .rows li > p { font-size: var(--t-small); }
+.atlas-panel .rows { max-height: 420px; overflow-y: auto; padding-right: var(--s-2); scrollbar-width: thin; scrollbar-color: color-mix(in oklab, var(--ink) 30%, transparent) transparent; }
 .panel-enter { animation: atlas-in 240ms var(--ease) both; }
 @keyframes atlas-in { from { opacity: 0; transform: translateY(6px); } }
 
 /* Globe: a round WebGL canvas with city pins layered on it (anchored to cobe's markers). */
-.globe-wrap { position: relative; width: 100%; aspect-ratio: 1; user-select: none; }
+/* Stage: the whole globe, with a column of callouts (one per city) fanning out beside it. */
+.globe-stage { position: relative; display: grid; grid-template-columns: 1fr 0fr; align-items: center; transition: grid-template-columns 650ms var(--ease), column-gap 650ms var(--ease); }
+.globe-stage.has-callouts { grid-template-columns: 1.3fr 1fr; column-gap: var(--s-6); }
+.globe-wrap { position: relative; width: 100%; aspect-ratio: 1; user-select: none; isolation: isolate; }   /* cobe wraps the canvas in its own div; the badges (z-index 1) sit above it */
 .atlas-side h2 { margin-bottom: var(--s-3); }
 .atlas-hint { margin-bottom: var(--s-5); max-width: 40ch; }
-.globe-canvas { width: 100%; height: 100%; border-radius: 50%; cursor: grab; touch-action: none; opacity: 0; transition: opacity 1.2s ease; background: radial-gradient(circle at 50% 50%, #1b0a0d 0, #1b0a0d 62%, transparent 63%); box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 35%, transparent), 0 24px 70px #0006; }
-.globe-city { position: absolute; left: anchor(center); top: anchor(center); translate: -50% -50%; z-index: 1; transition: scale 300ms var(--ease); }
-.globe-city:hover, .globe-city:focus-within { z-index: 3; }
-.globe-city.active { z-index: 4; }
-.globe-pin { position: relative; display: block; width: 26px; height: 26px; padding: 0; border: 1px solid color-mix(in oklab, var(--accent) 70%, transparent); border-radius: 50%; background: color-mix(in oklab, var(--accent) 14%, transparent); cursor: pointer; transition: background-color 150ms var(--ease), border-color 150ms var(--ease), transform 150ms var(--ease); }
-.globe-label { position: absolute; left: anchor(center); top: anchor(center); translate: 20px -50%; z-index: 1; padding: 4px 9px; border-radius: 6px; background: #1b0a0df2; color: var(--ink); font: 600 13px/1.2 var(--font-text); letter-spacing: .01em; white-space: nowrap; pointer-events: none; transition: scale 300ms var(--ease), opacity 150ms var(--ease); }
-.globe-label--left { translate: calc(-100% - 20px) -50%; }
-.globe-label.active { opacity: 0; }
-.globe-pin:hover { background: color-mix(in oklab, var(--accent) 30%, transparent); border-color: var(--accent); transform: scale(1.12); }
-.globe-pin:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-.globe-city.active .globe-pin { border-color: var(--accent); background: color-mix(in oklab, var(--accent) 24%, transparent); }
-.globe-city.active .globe-pin::after { content: ""; position: absolute; inset: -7px; border-radius: 50%; border: 1px solid var(--accent); animation: globe-ring 2.4s ease-out infinite; }
+/* the still (scripts/make-globe-still.mjs) carries the glow and shadow, and shows until the WebGL canvas fades in over it */
+.globe-canvas { background: url(/assets/globe-still.webp) center / contain no-repeat; width: 100%; height: 100%; cursor: grab; touch-action: none; opacity: 0; transition: opacity 1.2s ease; }
+.globe-cluster { position: absolute; left: anchor(center); top: anchor(center); translate: -50% -50%; z-index: 2; display: flex; align-items: center; min-height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font: 700 14px/1 var(--font-text); letter-spacing: .01em; white-space: nowrap; cursor: pointer; box-shadow: 0 6px 22px #0007, 0 0 0 5px color-mix(in oklab, var(--accent) 28%, transparent); transition: scale 300ms var(--ease), transform 150ms var(--ease), background-color 150ms var(--ease), opacity 200ms var(--ease); }
+.globe-cluster::after { content: ""; position: absolute; inset: -9px; border-radius: 999px; border: 1px solid color-mix(in oklab, var(--accent) 80%, transparent); animation: globe-ring 2.6s ease-out infinite; pointer-events: none; }
+.globe-cluster:hover { background: #ecd0a0; transform: translateY(-1px); }
+.globe-cluster:active { transform: translateY(0) scale(.98); }
+.globe-cluster:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+.globe-cluster.is-open { opacity: 0; pointer-events: none; }   /* the open region's pins and names take over from its badge */
 @keyframes globe-ring { 0% { transform: scale(.7); opacity: .9; } 100% { transform: scale(1.5); opacity: 0; } }
-.globe-card { position: absolute; left: 50%; bottom: calc(100% + 10px); translate: -50% 6px; width: max-content; min-width: 130px; max-width: min(240px, 62vw); padding: 10px 14px; border: 1px solid color-mix(in oklab, var(--accent) 55%, transparent); border-radius: var(--r-md); background: #1b0a0d; color: var(--ink); text-align: left; opacity: 0; pointer-events: none; transition: opacity 180ms var(--ease), translate 180ms var(--ease); }
-.globe-city.active .globe-card { opacity: 1; translate: -50% 0; }
-.globe-city.active .globe-card { pointer-events: auto; }
-.globe-city--left .globe-card { left: auto; right: -8px; translate: 0 0; }
-.globe-city--right .globe-card { left: -8px; translate: 0 0; }
-.globe-card__name { font: var(--display-weight) 16px/1.2 var(--font-display); letter-spacing: 0; white-space: nowrap; }
-.globe-card__events { display: none; margin: 8px 0 0; padding: 8px 0 0; list-style: none; border-top: 1px solid var(--line); }
-.globe-city.active .globe-card__events { display: grid; gap: 2px; }
-.globe-card__events a { display: grid; gap: 1px; padding: 6px 0; color: inherit; text-decoration: none; }
-.globe-card__events strong { font: 500 14px/1.3 var(--font-text); }
-.globe-card__events span { color: var(--muted); font-size: 13px; }
-.globe-card__events a:hover strong, .globe-card__events a:focus-visible strong { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+/* Callouts: one name per city in a neat column; the chosen city opens its events. */
+.callouts { min-width: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); opacity: 0; transition: opacity 400ms var(--ease) 250ms; }
+.callouts:empty { display: none; }
+.has-callouts .callouts { opacity: 1; }
+.callouts__bar { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); padding: 0 0 var(--s-2) 2px; font: 600 13px/1.2 var(--font-text); color: var(--muted); }
+.callouts__close { flex: none; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--ink); font: 400 24px/1 var(--font-text); cursor: pointer; transition: background-color 150ms var(--ease), transform 150ms var(--ease); }
+.callouts__close:hover { background: color-mix(in oklab, var(--ink) 14%, transparent); }
+.callouts__close:active { transform: scale(.94); }
+.callouts__close:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.callouts__list { list-style: none; margin: 0; padding: 0 4px 0 0; display: grid; gap: var(--s-2); max-height: 440px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: color-mix(in oklab, var(--ink) 30%, transparent) transparent; }
+.callout { border: 1px solid color-mix(in oklab, var(--accent) 38%, transparent); border-radius: var(--r-md); background: #160a0d; transition: border-color 150ms var(--ease), background-color 150ms var(--ease); }
+.callout:hover, .callout:focus-within { border-color: var(--accent); }
+.callout.active { border-color: var(--accent); background: #251116; }
+.callout__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); width: 100%; min-height: 48px; padding: 12px 14px; border: 0; background: none; color: var(--ink); text-align: left; cursor: pointer; }
+.callout__head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--r-md); }
+.callout__name { font: var(--display-weight) 17px/1.2 var(--font-display); letter-spacing: 0; }
+.callout__count { flex: none; color: var(--muted); font-size: 13px; }
+.callout__events { display: none; list-style: none; margin: 0; padding: 0 14px 10px; }
+.callout.active .callout__events { display: grid; gap: 2px; }
+.callout__events a { display: grid; gap: 1px; padding: 8px 0; border-top: 1px solid var(--line); color: inherit; text-decoration: none; }
+.callout__events strong { font: 500 14px/1.3 var(--font-text); }
+.callout__events span { color: var(--muted); font-size: 13px; }
+.callout__events a:hover strong, .callout__events a:focus-visible strong { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+/* Leader lines: thin curves from each pin on the globe to its name, drawn over the stage. */
+.globe-leaders { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 3; }
+.leader path { fill: none; stroke: var(--accent); stroke-width: 1; opacity: .5; transition: opacity 180ms var(--ease), stroke-width 180ms var(--ease); }
+.leader .dot { fill: #ffe2a0; stroke: #120709; stroke-width: 1.5; }
+.leader .ring { fill: none; stroke: var(--accent); stroke-width: 1; opacity: 0; transform-box: fill-box; transform-origin: center; }
+.leader.hot path, .leader.active path { opacity: 1; stroke-width: 1.6; }
+.leader.active .ring { animation: globe-ring 2.4s ease-out infinite; }
+.leader.off { opacity: 0; }
+.leader { transition: opacity 200ms var(--ease); }
 .no-globe .atlas-side { grid-column: 1 / -1; }
 
 .about-copy p { max-width: 46ch; }
@@ -53,23 +77,25 @@
   #home-events { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   #home-events > .tile { grid-column: auto; --tile-ratio: 2 / 3; }
 }
+/* Tablet and phone: the column opens under the globe, without leader lines (they would cross the text). */
 @media (max-width: 1023px) {
-  .globe-wrap { margin: var(--s-6) auto 0; max-width: 420px; }
-  .atlas-panel .atlas-more { margin-bottom: var(--s-5); }
+  .globe-stage, .globe-stage.has-callouts { grid-template-columns: 1fr; row-gap: 0; margin-top: var(--s-6); }
+  .globe-wrap { max-width: 420px; margin-inline: auto; }
+  .callouts { display: none; max-width: 420px; width: 100%; margin: var(--s-4) auto 0; }
+  .has-callouts .callouts { display: grid; }
+  .callouts__list { max-height: none; overflow: visible; }
+  .globe-leaders { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .panel-enter { animation: none; }
-  .globe-city.active .globe-pin::after { animation: none; }
-  .globe-canvas, .globe-card, .globe-city { transition: none; }
+  .leader.active .ring, .globe-cluster::after { animation: none; }
+  .globe-stage, .globe-canvas, .callouts, .callout, .globe-cluster, .leader, .leader path { transition: none; }
 }
 @media (min-width: 1024px) { #home-events .tile { --tile-ratio: 1 / 1; } }
 @media (max-width: 639px) {
-  /* On a phone the neighbouring UK pins are too close for a thumb, so the city chips choose the city; the open card's event links stay tappable. */
-  .globe-pin { pointer-events: none; }
-  .atlas-panel .rows li:nth-child(n+3) { display: none; }
+  .atlas-panel .rows { max-height: none; overflow: visible; padding-right: 0; }
   .atlas-panel .rows a { display: inline-flex; align-items: center; min-height: 44px; }
   .atlas-controls { margin-bottom: var(--s-4); }
-  .atlas-panel .atlas-more, .atlas-panel .atlas-count { display: none; }
   .atlas-panel .atlas-title { margin-bottom: var(--s-3); }
   /* two wide tiles fill the phone's one screen; the full list is one tap away */
   #home-events .tile { --tile-ratio: 2 / 1; grid-column: 1 / -1; }
@@ -80,3 +106,8 @@
 /* Phone: the About photograph keeps a fixed 3:2 frame under the text so the section stays one screen. */
 @media (max-width: 639px) { .about-photo.frame--fill { flex: none; height: auto; min-height: 0; aspect-ratio: 3 / 2; } }
 @media (max-width: 359px) { .about-copy p:nth-of-type(2) { display: none; } }
+@media (max-width: 639px) {
+  .globe-cluster { min-height: 44px; font-size: 13px; }
+  .callouts__close { width: 44px; height: 44px; }
+  .callout__head { min-height: 52px; }
+}

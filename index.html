@@ -130,14 +130,17 @@
   </section>
   <section class="section ground-surface" id="atlas" style="--h: 1; --hm: 2" aria-labelledby="atlas-h">
     <div class="wrap">
-      <div class="grid grid--top fill">
+      <div class="grid grid--top">
         <div class="span-5 atlas-side">
           <h2 id="atlas-h">Events by city</h2>
-          <p class="t-lead atlas-hint" id="atlas-hint">Choose a city, or press a pin on the globe, to see its events.</p>
+          <p class="t-lead atlas-hint" id="atlas-hint">Press the badge to list the cities.</p>
           <div class="atlas-controls" role="group" aria-label="Choose an event city"></div>
           <div class="atlas-panel" id="atlas-panel" aria-live="polite"></div>
         </div>
-        <div class="span-6 start-7 globe-wrap" id="globe-wrap" data-visual></div>
+        <div class="span-6 start-7 globe-stage" id="globe-stage">
+          <div class="globe-wrap" id="globe-wrap" data-visual></div>
+          <div class="callouts" id="globe-callouts"></div>
+        </div>
       </div>
     </div>
   </section>

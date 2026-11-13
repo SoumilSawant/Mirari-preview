@@ -74,21 +74,25 @@ async function home(){
   if(!cities.length){$('#atlas').hidden=true;document.querySelectorAll('a[href$="#atlas"]').forEach(a=>(a.closest('.nav__item,li')||a).hidden=true);return;}
   $('.atlas-controls').innerHTML=`<button class="chip active" type="button" data-city="all" aria-pressed="true">All cities</button>${cities.map(c=>`<button class="chip" type="button" data-city="${esc(c)}" aria-pressed="false">${esc(c)}</button>`).join('')}`;
   let globe=null;
-  function select(city){
-    document.querySelectorAll('.chip[data-city]').forEach(b=>{const active=b.dataset.city===city;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});
-    const selected=future.filter(e=>city==='all'||e.city===city),title=city==='all'?'All cities':city;
-    $('#atlas-panel').innerHTML=`<div class="panel-enter"><p class="atlas-title">${esc(title)}</p><p class="atlas-count">${selected.length} upcoming ${selected.length===1?'event':'events'}</p><ul class="rows">${selected.slice(0,3).map(e=>`<li><a class="rows__name" href="${link(e.id)}">${esc(e.title)}</a><p>${date(e.startAt)} · ${esc(e.venue)}${e.demo?' · Demo event':''}</p><span class="rows__value">${status(e)==='Tickets available'?`From ${price(e)}`:esc(status(e))}</span></li>`).join('')}</ul>${selected.length>3?`<a class="link atlas-more" href="/events${city==='all'?'':`?city=${encodeURIComponent(city)}`}">See all ${selected.length} events</a>`:''}</div>`;
-    globe?.focus(city);
+  // The chips, the list and the globe share one selection: 'all', a city name, or a list of city names (a zoomed-in region).
+  // `drive` moves the globe too; it is off when the globe itself made the change.
+  function show(selection,drive=true){
+    const names=Array.isArray(selection)?selection:null,city=names?null:selection;
+    document.querySelectorAll('.chip[data-city]').forEach(b=>{const active=names?b.dataset.city==='all'&&names.length===cities.length:b.dataset.city===city;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});
+    const selected=future.filter(e=>names?names.includes(e.city):city==='all'||e.city===city);
+    const title=names?(names.length===cities.length?'All cities':`${names.length} ${names.length===1?'city':'cities'}`):city==='all'?'All cities':city;
+    $('#atlas-panel').innerHTML=`<div class="panel-enter"><p class="atlas-title">${esc(title)}<span class="atlas-count"> · ${selected.length} upcoming ${selected.length===1?'event':'events'}</span></p><ul class="rows">${selected.map(e=>`<li><a class="rows__name" href="${link(e.id)}">${esc(e.title)}</a><p>${date(e.startAt)} · ${esc(e.venue)}${e.city&&names&&names.length>1?' · '+esc(e.city):''}${e.demo?' · Demo event':''}</p><span class="rows__value">${status(e)==='Tickets available'?`From ${price(e)}`:esc(status(e))}</span></li>`).join('')||'<li><p>No upcoming events here yet.</p></li>'}</ul></div>`;
+    if(drive&&globe){if(city==='all')globe.focusWorld();else if(city)globe.focusCity(city);}
   }
-  document.querySelectorAll('.chip[data-city]').forEach(b=>b.addEventListener('click',()=>select(b.dataset.city)));
+  document.querySelectorAll('.chip[data-city]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.city)));
   // The globe is progressive: without WebGL or CSS anchor positioning the chips and the list below carry the section.
   try{
     const{globeSupported,mountGlobe}=await import('/globe.js');
     if(!globeSupported())throw new Error('no globe');
     const places=cities.map(city=>{const list=future.filter(e=>e.city===city);return{name:city,lat:list[0].lat,lng:list[0].lng,events:list.map(e=>({href:link(e.id),title:e.title,meta:`${date(e.startAt)} · ${status(e)==='Tickets available'?'From '+price(e):status(e)}`}))};});
-    globe=mountGlobe($('#globe-wrap'),places,{onSelect:select,reduced:reduced.matches});
-  }catch{$('#globe-wrap').hidden=true;$('#atlas .grid').classList.add('no-globe');$('#atlas-hint').textContent='Choose a city to see its events.';}
-  select('all');
+    globe=mountGlobe($('#globe-wrap'),places,{stage:$('#globe-stage'),callouts:$('#globe-callouts'),onSelect:name=>show(name,false),onRegion:names=>show(names,false),onZoomOut:()=>show('all',false),reduced:reduced.matches});
+  }catch{$('#globe-stage').hidden=true;$('#atlas .grid').classList.add('no-globe');$('#atlas-hint').textContent='Choose a city to see its events.';}
+  show('all');
 }
 function listing(){
   document.title='Events · Mirari';
