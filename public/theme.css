@@ -49,3 +49,24 @@
 
 /* Phone: the hero title stays larger than the section headings (Georgia runs wide, so the desktop scale is smaller). */
 @media (max-width: 639px) { :root { --ly-scale: 0.9; } }
+
+/* ---- Spotlight cards: a glow follows the pointer and lights the nearest edge (public/spotlight.js) ---- */
+.spot-fx { --glow: 217 181 118; position: absolute; inset: 0; z-index: 2; border-radius: inherit; pointer-events: none; opacity: 0;
+  background: radial-gradient(340px circle at var(--mx, 50%) var(--my, 50%), rgb(var(--glow) / .16), transparent 62%); }
+.spot-fx::after { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px;
+  background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), rgb(var(--glow) / .95), transparent 70%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+.spot-fx[data-tone="ember"] { --glow: 214 84 104; }
+.spot-fx[data-tone="copper"] { --glow: 224 138 91; }
+/* on the ivory sections the glow is burgundy ink instead of gold */
+.ground-inverse .spot-fx { --glow: 122 31 43; }
+.ground-inverse .spot-fx[data-tone="ember"] { --glow: 163 38 27; }
+.ground-inverse .spot-fx[data-tone="copper"] { --glow: 154 88 40; }
+.ground-inverse .spot-fx { background: radial-gradient(340px circle at var(--mx, 50%) var(--my, 50%), rgb(var(--glow) / .09), transparent 62%); }
+@media print { .spot-fx { display: none; } }
+/* on photographs the light needs more strength and a firmer rim to read */
+.tile__media > .spot-fx { background: radial-gradient(300px circle at var(--mx, 50%) var(--my, 50%), rgb(var(--glow) / .3), transparent 65%); mix-blend-mode: screen; }
+.tile__media > .spot-fx::after { padding: 2px; }
+.ground-inverse .tile__media > .spot-fx { mix-blend-mode: normal; background: radial-gradient(300px circle at var(--mx, 50%) var(--my, 50%), rgb(217 181 118 / .32), transparent 65%); }
+.ground-inverse .tile__media > .spot-fx::after { background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), rgb(217 181 118 / 1), transparent 70%); }
