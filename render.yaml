@@ -1,0 +1,67 @@
+# Render Blueprint for the HOSTED STRIPE TEST deployment of Mirari.
+#
+# Test mode only: APP_MODE=stripe-test, a Stripe sk_test_ key, a hosted TEST webhook secret.
+# Do not use this file as-is for live payments - the live cutover is a separate, later step
+# (see docs/DEPLOY-RENDER-STAGING.md). No secrets belong in this file: every value marked
+# `sync: false` is typed into the Render dashboard by the owner.
+#
+# One instance only. SQLite lives on the persistent disk, so never scale beyond 1 and never
+# use a free/ephemeral plan for anything that holds orders or tickets.
+services:
+  - type: web
+    name: mirari-staging
+    runtime: node
+    plan: starter            # paid plan required: persistent disks are not available on free
+    numInstances: 1
+    buildCommand: npm ci && npm run check && npm test
+    startCommand: npm start
+    # /api/health answers as soon as the app boots. Switch to /api/ready once Resend is
+    # configured (ready also requires Stripe + the webhook secret + the email sender).
+    healthCheckPath: /api/health
+    disk:
+      name: mirari-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: APP_MODE
+        value: stripe-test
+      # "mirari" = native Stripe booking on this deployment.
+      # Set to "ticket-tailor" to expose only events that have a Ticket Tailor link.
+      - key: PUBLIC_SALES_CHANNEL
+        value: mirari
+      # A fresh database for this deployment. Never upload a local .sqlite file.
+      - key: DATABASE_PATH
+        value: /var/data/mirari-staging.sqlite
+      - key: UPLOADS_PATH
+        value: /var/data/uploads
+      # Render terminates TLS in front of the app; trust exactly one proxy hop.
+      # (Supported only on Render production; do not also set TRUSTED_PROXY_CIDRS.)
+      - key: TRUSTED_PROXY_HOPS
+        value: "1"
+      - key: PAYMENT_CHECKIN_MAX_AGE_MS
+        value: "0"
+      - key: STRIPE_PAYMENT_METHODS
+        value: card
+      # ---- owner supplies these in the Render dashboard (never commit them) ----
+      - key: APP_URL              # https://<service>.onrender.com first, https://mirari.events later
+        sync: false
+      - key: STRIPE_SECRET_KEY    # sk_test_... from the Mirari Stripe sandbox
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET # whsec_... of the HOSTED test webhook endpoint (not the CLI secret)
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_TOTP_SECRET    # from `npm run mfa-secret`; enrol it in an authenticator app
+        sync: false
+      - key: RESEND_API_KEY       # required to start with NODE_ENV=production
+        sync: false
+      - key: EMAIL_FROM           # a sender on a Resend-verified domain
+        sync: false
