@@ -158,3 +158,64 @@ a.admin-row:hover .row-arrow { transform: translateX(3px); }
 /* The kit's hover fill must not wash out the selected tab while the pointer rests on it. */
 .admin-tabs .btn.active:is(:hover, :active, :focus-visible) { background: var(--ink); border-color: var(--ink); color: var(--p-bg); }
 .help-text + .field { margin-top: var(--s-3); }
+
+/* ---- Booking confirmed: the animated ticket at the top of a paid order ---- */
+.confirm { display: grid; justify-items: center; margin: 0 auto var(--s-7); }
+.confirm__card { position: relative; width: min(100%, 440px); padding: var(--s-7) var(--s-6) var(--s-6); border-radius: var(--r-lg); border: 1px solid var(--line); background: var(--p-surface); color: var(--ink); text-align: center; box-shadow: 0 30px 60px -30px rgb(0 0 0 / .7); opacity: 0; transform: translateY(28px) scale(.97); }
+.confirm.is-in .confirm__card { animation: confirm-in 700ms var(--ease) forwards; }
+.confirm__tick { display: grid; place-items: center; width: 84px; height: 84px; margin: 0 auto var(--s-5); border-radius: 50%; background: color-mix(in oklab, var(--gold) 14%, var(--p-surface)); color: var(--gold); }
+.confirm__ring, .confirm__check { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.confirm.is-in .confirm__ring { animation: confirm-draw 800ms var(--ease) 250ms forwards; }
+.confirm.is-in .confirm__check { animation: confirm-draw 500ms var(--ease) 800ms forwards; }
+.confirm.is-in .confirm__tick { animation: confirm-pop 600ms var(--ease) 250ms both; }
+.confirm__title { font: var(--display-weight) var(--t-h2)/1.1 var(--font-display); margin: 0 0 var(--s-2); }
+.confirm__sub { margin: 0; color: var(--muted); }
+.confirm__rule { height: 0; margin: var(--s-6) 0; border: 0; border-top: 1px dashed color-mix(in oklab, var(--ink) 28%, transparent); transform-origin: left; }
+.confirm__rule--notch { position: relative; }
+.confirm__rule--notch::before, .confirm__rule--notch::after { content: ""; position: absolute; top: -14px; width: 28px; height: 28px; border-radius: 50%; background: var(--p-bg); }
+.confirm__rule--notch::before { left: calc(-1 * var(--s-6) - 14px); }
+.confirm__rule--notch::after { right: calc(-1 * var(--s-6) - 14px); }
+.confirm__row { display: flex; justify-content: space-between; gap: var(--s-4); margin: 0 0 var(--s-5); text-align: left; }
+.confirm__row--solo { display: block; }
+.confirm__row dt { font-size: var(--t-label); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.confirm__row dd { margin: 4px 0 0; font-weight: 600; }
+.confirm__end { text-align: right; }
+.confirm__mono { font-family: ui-monospace, Consolas, monospace; letter-spacing: .04em; }
+.confirm__amount { font-size: 1.35em; }
+.confirm__event { display: flex; align-items: center; gap: var(--s-4); padding: var(--s-4); border-radius: var(--r-md, 14px); background: color-mix(in oklab, var(--ink) 6%, var(--p-surface)); text-align: left; }
+.confirm__event strong { display: block; }
+.confirm__event small { display: block; margin-top: 2px; color: var(--muted); font-size: var(--t-small); }
+.confirm__badge { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--gold); color: var(--p-bg); font-weight: 700; }
+.confirm__bars { display: flex; justify-content: center; align-items: stretch; gap: 2px; height: 76px; }
+.confirm__bars i { flex: none; width: var(--w); background: var(--ink); border-radius: 1px; transform-origin: bottom; transform: scaleY(0); }
+.confirm.is-in .confirm__bars i { animation: confirm-bar 500ms var(--ease) calc(1100ms + var(--i) * 12ms) forwards; }
+.confirm__hint { margin: var(--s-4) 0 0; font-size: var(--t-small); }
+.confirm__hint a { color: var(--gold); }
+.confirm__flag { margin: var(--s-4) 0 0; font-size: var(--t-label); color: var(--muted); }
+/* the rest of the card settles in after the tick */
+.confirm__title, .confirm__sub, .confirm__row, .confirm__event, .confirm__hint, .confirm__flag { opacity: 0; transform: translateY(10px); }
+.confirm.is-in :is(.confirm__title, .confirm__sub, .confirm__row, .confirm__event, .confirm__hint, .confirm__flag) { animation: confirm-up 520ms var(--ease) forwards; }
+.confirm.is-in .confirm__title { animation-delay: 700ms; }
+.confirm.is-in .confirm__sub { animation-delay: 800ms; }
+.confirm.is-in .confirm__row:nth-of-type(1) { animation-delay: 950ms; }
+.confirm.is-in .confirm__row:nth-of-type(2) { animation-delay: 1030ms; }
+.confirm.is-in .confirm__event { animation-delay: 1110ms; }
+.confirm.is-in .confirm__hint, .confirm.is-in .confirm__flag { animation-delay: 1500ms; }
+.confirm.is-in .confirm__rule { animation: confirm-rule 700ms var(--ease) 850ms backwards; }
+@keyframes confirm-in { to { opacity: 1; transform: none; } }
+@keyframes confirm-up { to { opacity: 1; transform: none; } }
+@keyframes confirm-draw { to { stroke-dashoffset: 0; } }
+@keyframes confirm-pop { 0% { transform: scale(.6); } 60% { transform: scale(1.08); } 100% { transform: scale(1); } }
+@keyframes confirm-bar { to { transform: scaleY(1); } }
+@keyframes confirm-rule { from { transform: scaleX(0); } }
+.confetti { position: fixed; inset: 0; z-index: 40; overflow: hidden; pointer-events: none; }
+.confetti i { position: absolute; top: -20px; width: var(--w); height: var(--h); background: var(--c); border-radius: 2px; opacity: 0; animation: confetti-fall var(--d) cubic-bezier(.3, .6, .5, 1) var(--delay) forwards; }
+@keyframes confetti-fall { 0% { opacity: 1; transform: translate(0, 0) rotate(0); } 100% { opacity: 0; transform: translate(var(--dx), 105vh) rotate(var(--r)); } }
+@media (prefers-reduced-motion: reduce) {
+  .confirm__card, .confirm__title, .confirm__sub, .confirm__row, .confirm__event, .confirm__hint, .confirm__flag { opacity: 1; transform: none; animation: none !important; }
+  .confirm__ring, .confirm__check { stroke-dashoffset: 0; animation: none !important; }
+  .confirm__bars i { transform: none; animation: none !important; }
+  .confirm__rule { animation: none !important; }
+}
+@media (max-width: 639px) { .confirm__rule--notch::before { left: calc(-1 * var(--s-6) - 14px); } }
+@media print { .confirm, .confetti { display: none !important; } }
