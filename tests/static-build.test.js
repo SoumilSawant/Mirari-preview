@@ -8,7 +8,7 @@ const root=process.cwd();
 const output=path.join(root,'dist');
 const walk=directory=>readdirSync(directory).flatMap(name=>{const file=path.join(directory,name);return statSync(file).isDirectory()?walk(file):[file];});
 
-test('static launch build contains only customer files and the approved event',()=>{
+test('static launch build contains only customer files and the approved events',()=>{
   execFileSync(process.execPath,['scripts/build-static.mjs'],{cwd:root});
   const files=walk(output).map(file=>path.relative(output,file).replaceAll('\\','/')).sort();
   assert.ok(files.includes('index.html'));
@@ -20,7 +20,10 @@ test('static launch build contains only customer files and the approved event',(
   const customerText=customerFiles.map(file=>readFileSync(path.join(output,file),'utf8')).join('\n');
   for(const forbidden of ['/api/','localhost','127.0.0.1','sk_test','sk_live','RESEND_API_KEY','/admin','/my-tickets','/order/'])assert.equal(customerText.includes(forbidden),false,`Unexpected ${forbidden}`);
   const data=JSON.parse(readFileSync(path.join(output,'event-data.json'),'utf8'));
-  assert.deepEqual(data.map(event=>event.id),['diwali-pahat-london-2026']);
+  assert.deepEqual(data.map(event=>event.id),['diwali-pahat-london-2026','halad-night-london-2026']);
   assert.equal(data[0].externalBookingUrl,'https://buytickets.at/mirarievents/2495970');
-  assert.equal(data[0].externalBookingEnabled,true);
+  assert.equal(data[1].externalBookingUrl,'https://buytickets.at/mirarievents/2553204');
+  assert.equal(data[1].startAt,'2026-12-05T20:00:00.000Z');
+  assert.ok(data.every(event=>event.externalBookingEnabled===true));
+  assert.ok(files.includes('assets/halad-night-2026.webp'));
 });

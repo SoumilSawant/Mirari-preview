@@ -27,6 +27,7 @@ try{
   browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'});
   for(const viewport of [{width:1440,height:900},{width:390,height:844}]){
     const page=await browser.newPage({viewport,reducedMotion:'reduce'});
+    await page.clock.setFixedTime(new Date('2026-11-25T12:00:00Z'));
     const failures=[];const requests=[];
     page.on('pageerror',error=>failures.push(error.message));
     page.on('requestfailed',request=>failures.push(`${request.url()} ${request.failure()?.errorText}`));
@@ -39,24 +40,42 @@ try{
     assert.equal(await page.locator('text=Stripe Test Mode').count(),0);
     assert.equal(await page.locator('a[href="/my-tickets"]').count(),0);
     await page.screenshot({path:path.join(screenshots,`home-${viewport.width}.png`),fullPage:true});
-    // Real clock is after 8 November 2026: every booking path must be withdrawn.
-    assert.equal(await page.locator('a[href*="buytickets.at"]').count(),0);
-    assert.equal(await page.locator('#nav-ticket').isVisible(),false);
-    assert.match(await page.locator('.city-banner').innerText(),/No upcoming events/);
-    assert.match(await page.locator('.event-card').innerText(),/Event ended/);
+    // The clock is fixed between the two events: Diwali Pahat has ended, Halad Night is on sale.
+    assert.match(await page.locator('.event-card').innerText(),/Halad Night/);
+    assert.match(await page.locator('.event-card').innerText(),/Book via Ticket Tailor/);
+    assert.match(await page.locator('.city-banner').innerText(),/1 upcoming event/);
+    assert.equal(await page.locator('#nav-ticket').getAttribute('href'),'https://buytickets.at/mirarievents/2553204');
+    assert.equal(await page.locator('a[href*="2495970"]').count(),0,'The ended event offers no booking link');
     await page.goto(`${origin}/event/diwali-pahat-london-2026`,{waitUntil:'networkidle'});
     await page.getByRole('heading',{name:'Diwali Pahat London 2026'}).waitFor();
     await page.getByRole('heading',{name:'This event has ended.'}).waitFor();
-    assert.equal(await page.getByRole('link',{name:/Book tickets/}).count(),0);
-    assert.equal(await page.locator('a[href*="buytickets.at"]').count(),0);
+    // the ended event offers no booking of its own; the header's link leads to the next event on sale
+    assert.equal(await page.locator('a[href*="2495970"]').count(),0);
+    assert.equal(await page.locator('.booking-panel a[href*="buytickets.at"]').count(),0);
+    assert.equal(await page.locator('#nav-ticket').getAttribute('href'),'https://buytickets.at/mirarievents/2553204');
     assert.match(await page.locator('.facts').innerText(),/11:00–15:00 · GMT/);
     assert.match(await page.locator('.facts').innerText(),/Sales closed/);
     assert.equal(await page.locator('.event-poster img').evaluate(image=>image.getBoundingClientRect().height>image.getBoundingClientRect().width),true);
     await page.screenshot({path:path.join(screenshots,`event-ended-${viewport.width}.png`),fullPage:true});
+    // Halad Night: on sale, booking goes to its own listing, no invented venue or directions
+    await page.goto(`${origin}/event/halad-night-london-2026`,{waitUntil:'networkidle'});
+    await page.getByRole('heading',{name:'Halad Night'}).first().waitFor();
+    await page.getByRole('heading',{name:'Book securely through Ticket Tailor.'}).waitFor();
+    assert.equal(await page.getByRole('link',{name:/Book tickets/}).last().getAttribute('href'),'https://buytickets.at/mirarievents/2553204');
+    assert.match(await page.locator('.facts').innerText(),/5 Dec 2026/);
+    assert.match(await page.locator('.facts').innerText(),/20:00–22:30 · GMT/);
+    assert.match(await page.locator('.facts').innerText(),/Venue to be announced/);
+    assert.equal(await page.getByRole('link',{name:/Open directions/}).count(),0);
+    assert.equal(await page.getByRole('heading',{name:'Programme and highlights'}).count(),0);
+    assert.match(await page.locator('.detail-copy').innerText(),/Marathi Fake Wedding/);
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),true);
+    await page.screenshot({path:path.join(screenshots,`halad-night-${viewport.width}.png`),fullPage:true});
     await page.goto(`${origin}/events`,{waitUntil:'networkidle'});
-    await page.getByRole('heading',{name:'No upcoming events right now.'}).waitFor();
+    assert.equal(await page.locator('.event-card').count(),1);
+    assert.match(await page.locator('.event-card').innerText(),/Halad Night/);
     await page.locator('select[name="when"]').selectOption('past');
     assert.equal(await page.locator('.event-card').count(),1);
+    assert.match(await page.locator('.event-card').innerText(),/Diwali Pahat/);
     assert.equal(requests.some(url=>url.includes('/api/')),false);
     assert.deepEqual(failures,[]);
     await page.close();
